@@ -6,13 +6,14 @@ import os
 import sys
 import time
 import warnings
+
 try:
     import fcntl
 except ImportError:
     fcntl = None
 
 
-Error = namedtuple('Error', ('metadata',))
+Error = namedtuple("Error", ("metadata",))
 
 
 class UTC(datetime.tzinfo):
@@ -20,17 +21,22 @@ class UTC(datetime.tzinfo):
 
     def __repr__(self):
         return "<UTC>"
+
     def utcoffset(self, dt):
         return self.zero
+
     def tzname(self, dt):
         return "UTC"
+
     def dst(self, dt):
         return self.zero
+
+
 _UTC = UTC()
 
 
 def load_class(s):
-    path, klass = s.rsplit('.', 1)
+    path, klass = s.rsplit(".", 1)
     __import__(path)
     mod = sys.modules[path]
     return getattr(mod, klass)
@@ -38,7 +44,7 @@ def load_class(s):
 
 def reraise_as(new_exc_class):
     exc_class, exc, tb = sys.exc_info()
-    raise new_exc_class('%s: %s' % (exc_class.__name__, exc))
+    raise new_exc_class("%s: %s" % (exc_class.__name__, exc))
 
 
 def is_naive(dt):
@@ -84,10 +90,9 @@ def normalize_expire_time(expires, utc=True):
 
 def normalize_time(eta=None, delay=None, utc=True):
     if not ((delay is None) ^ (eta is None)):
-        raise ValueError('Specify either an eta (datetime) or delay (seconds)')
+        raise ValueError("Specify either an eta (datetime) or delay (seconds)")
     elif delay:
-        method = (utc and datetime.datetime.utcnow or
-                  datetime.datetime.now)
+        method = utc and datetime.datetime.utcnow or datetime.datetime.now
         if not isinstance(delay, datetime.timedelta):
             delay = datetime.timedelta(seconds=delay)
         return method() + delay
@@ -107,11 +112,15 @@ def normalize_time(eta=None, delay=None, utc=True):
 if sys.version_info[0] == 2:
     string_type = basestring
     text_type = unicode
+
     def to_timestamp(dt):
         return time.mktime(dt.timetuple())
+
+
 else:
     string_type = (bytes, str)
     text_type = str
+
     def to_timestamp(dt):
         return dt.timestamp()
 
@@ -120,16 +129,16 @@ def encode(s):
     if isinstance(s, bytes):
         return s
     elif isinstance(s, text_type):
-        return s.encode('utf8')
+        return s.encode("utf8")
     elif s is not None:
-        return text_type(s).encode('utf8')
+        return text_type(s).encode("utf8")
 
 
 def decode(s):
     if isinstance(s, text_type):
         return s
     elif isinstance(s, bytes):
-        return s.decode('utf8')
+        return s.decode("utf8")
     elif s is not None:
         return text_type(s)
 
@@ -137,8 +146,10 @@ def decode(s):
 class FileLock(object):
     def __init__(self, filename):
         if fcntl is None:
-            warnings.warn('FileLock not supported on this platform. Please '
-                          'use a different storage implementation.')
+            warnings.warn(
+                "FileLock not supported on this platform. Please "
+                "use a different storage implementation."
+            )
         self.filename = filename
         self.fd = None
 

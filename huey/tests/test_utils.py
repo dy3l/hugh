@@ -8,14 +8,15 @@ from huey.utils import normalize_time
 from huey.utils import reraise_as
 
 
-class MyException(Exception): pass
+class MyException(Exception):
+    pass
 
 
 class TestReraiseAs(unittest.TestCase):
     def test_wrap_exception(self):
         def raise_keyerror():
             try:
-                {}['huey']
+                {}["huey"]
             except KeyError as exc:
                 reraise_as(MyException)
 
@@ -25,28 +26,30 @@ class TestReraiseAs(unittest.TestCase):
         except MyException as exc:
             self.assertEqual(str(exc), "KeyError: 'huey'")
         else:
-            raise AssertionError('MyException not raised as expected.')
+            raise AssertionError("MyException not raised as expected.")
 
 
 class FakePacific(datetime.tzinfo):
     def utcoffset(self, dt):
         return datetime.timedelta(hours=-8)
+
     def tzname(self, dt):
-        return 'US/Pacific'
+        return "US/Pacific"
+
     def dst(self, dt):
         return datetime.timedelta(0)
 
 
 class TestNormalizeTime(unittest.TestCase):
     def setUp(self):
-        self._orig_tz = os.environ.get('TZ')
-        os.environ['TZ'] = 'US/Pacific'
+        self._orig_tz = os.environ.get("TZ")
+        os.environ["TZ"] = "US/Pacific"
         time.tzset()
 
     def tearDown(self):
-        del os.environ['TZ']
+        del os.environ["TZ"]
         if self._orig_tz:
-            os.environ['TZ'] = self._orig_tz
+            os.environ["TZ"] = self._orig_tz
         time.tzset()
 
     def test_normalize_time(self):

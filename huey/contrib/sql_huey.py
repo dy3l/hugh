@@ -16,13 +16,15 @@ class BytesBlobField(BlobField):
 
 
 class SqlStorage(BaseStorage):
-    def __init__(self, name='huey', database=None, **kwargs):
+    def __init__(self, name="huey", database=None, **kwargs):
         super(SqlStorage, self).__init__(name)
 
         if database is None:
-            raise ConfigurationError('Use of SqlStorage requires a '
-                                     'database= argument, which should be a '
-                                     'peewee database or a connection string.')
+            raise ConfigurationError(
+                "Use of SqlStorage requires a "
+                "database= argument, which should be a "
+                "peewee database or a connection string."
+            )
 
         if isinstance(database, Database):
             self.database = database
@@ -42,15 +44,17 @@ class SqlStorage(BaseStorage):
             queue = CharField()
             key = CharField()
             value = BytesBlobField()
+
             class Meta:
-                primary_key = CompositeKey('queue', 'key')
+                primary_key = CompositeKey("queue", "key")
 
         class Schedule(Base):
             queue = CharField()
             data = BytesBlobField()
             timestamp = TimestampField(resolution=1000)
+
             class Meta:
-                indexes = ((('queue', 'timestamp'), False),)
+                indexes = ((("queue", "timestamp"), False),)
 
         class Task(Base):
             queue = CharField()
@@ -76,8 +80,7 @@ class SqlStorage(BaseStorage):
         return self.Task.select(*columns).where(self.Task.queue == self.name)
 
     def schedule(self, *columns):
-        return (self.Schedule.select(*columns)
-                .where(self.Schedule.queue == self.name))
+        return self.Schedule.select(*columns).where(self.Schedule.queue == self.name)
 
     def kv(self, *columns):
         return self.KV.select(*columns).where(self.KV.queue == self.name)
@@ -93,9 +96,11 @@ class SqlStorage(BaseStorage):
 
     def dequeue(self):
         self.check_conn()
-        query = (self.tasks(self.Task.id, self.Task.data)
-                 .order_by(self.Task.priority.desc(), self.Task.id)
-                 .limit(1))
+        query = (
+            self.tasks(self.Task.id, self.Task.data)
+            .order_by(self.Task.priority.desc(), self.Task.id)
+            .limit(1)
+        )
         if self.database.for_update:
             query = query.for_update()
 
@@ -113,8 +118,9 @@ class SqlStorage(BaseStorage):
         return self.tasks().count()
 
     def enqueued_items(self, limit=None):
-        query = self.tasks(self.Task.data).order_by(self.Task.priority.desc(),
-                                                    self.Task.id)
+        query = self.tasks(self.Task.data).order_by(
+            self.Task.priority.desc(), self.Task.id
+        )
         if limit is not None:
             query = query.limit(limit)
         return list(map(operator.itemgetter(0), query.tuples()))
@@ -128,9 +134,11 @@ class SqlStorage(BaseStorage):
 
     def read_schedule(self, timestamp):
         self.check_conn()
-        query = (self.schedule(self.Schedule.id, self.Schedule.data)
-                 .where(self.Schedule.timestamp <= timestamp)
-                 .tuples())
+        query = (
+            self.schedule(self.Schedule.id, self.Schedule.data)
+            .where(self.Schedule.timestamp <= timestamp)
+            .tuples()
+        )
         if self.database.for_update:
             query = query.for_update()
 
@@ -140,10 +148,7 @@ class SqlStorage(BaseStorage):
                 return []
 
             id_list, data = zip(*results)
-            (self.Schedule
-             .delete()
-             .where(self.Schedule.id.in_(id_list))
-             .execute())
+            (self.Schedule.delete().where(self.Schedule.id.in_(id_list)).execute())
 
             return list(data)
 
@@ -151,25 +156,25 @@ class SqlStorage(BaseStorage):
         return self.schedule().count()
 
     def scheduled_items(self):
-        tasks = (self.schedule(self.Schedule.data)
-                 .order_by(self.Schedule.timestamp)
-                 .tuples())
+        tasks = (
+            self.schedule(self.Schedule.data).order_by(self.Schedule.timestamp).tuples()
+        )
         return list(map(operator.itemgetter(0), tasks))
 
     def flush_schedule(self):
-        (self.Schedule
-         .delete()
-         .where(self.Schedule.queue == self.name)
-         .execute())
+        (self.Schedule.delete().where(self.Schedule.queue == self.name).execute())
 
     def put_data(self, key, value, is_result=False):
         self.check_conn()
         if isinstance(self.database, PostgresqlDatabase):
-            (self.KV
-             .insert(queue=self.name, key=key, value=value)
-             .on_conflict(conflict_target=[self.KV.queue, self.KV.key],
-                          preserve=[self.KV.value])
-             .execute())
+            (
+                self.KV.insert(queue=self.name, key=key, value=value)
+                .on_conflict(
+                    conflict_target=[self.KV.queue, self.KV.key],
+                    preserve=[self.KV.value],
+                )
+                .execute()
+            )
         else:
             self.KV.replace(queue=self.name, key=key, value=value).execute()
 
@@ -195,8 +200,8 @@ class SqlStorage(BaseStorage):
                 return EmptyData
             else:
                 dq = self.KV.delete().where(
-                    (self.KV.queue == self.name) &
-                    (self.KV.key == key))
+                    (self.KV.queue == self.name) & (self.KV.key == key)
+                )
                 return kv.value if dq.execute() == 1 else EmptyData
 
     def has_data_for_key(self, key):

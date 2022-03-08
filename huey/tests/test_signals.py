@@ -71,8 +71,9 @@ class TestSignals(BaseTestCase):
         r = task_b(None)
         self.assertSignals([])
         self.assertTrue(self.execute_next() is None)
-        self.assertSignals([SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_RETRYING,
-                            SIGNAL_SCHEDULED])
+        self.assertSignals(
+            [SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_RETRYING, SIGNAL_SCHEDULED]
+        )
 
     def test_signals_revoked(self):
         @self.huey.task()
@@ -91,7 +92,7 @@ class TestSignals(BaseTestCase):
 
     def test_signals_locked(self):
         @self.huey.task()
-        @self.huey.lock_task('lock-a')
+        @self.huey.lock_task("lock-a")
         def task_a(n):
             return n + 1
 
@@ -100,7 +101,7 @@ class TestSignals(BaseTestCase):
         self.assertEqual(self.execute_next(), 2)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
 
-        with self.huey.lock_task('lock-a'):
+        with self.huey.lock_task("lock-a"):
             r = task_a(2)
             self.assertSignals([])
             self.assertTrue(self.execute_next() is None)
@@ -169,13 +170,13 @@ class TestSignals(BaseTestCase):
 
         r = task_a(1)
         self.assertEqual(self.execute_next(), 2)
-        self.assertEqual(state1, ['executing', 'complete'])
-        self.assertEqual(state2, ['executing', 'complete'])
+        self.assertEqual(state1, ["executing", "complete"])
+        self.assertEqual(state2, ["executing", "complete"])
 
         self.huey.disconnect_signal(handler1, SIGNAL_COMPLETE)
         self.huey.disconnect_signal(handler2)
 
         r2 = task_a(2)
         self.assertEqual(self.execute_next(), 3)
-        self.assertEqual(state1, ['executing', 'complete', 'executing'])
-        self.assertEqual(state2, ['executing', 'complete'])
+        self.assertEqual(state1, ["executing", "complete", "executing"])
+        self.assertEqual(state2, ["executing", "complete"])

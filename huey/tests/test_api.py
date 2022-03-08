@@ -21,17 +21,20 @@ from huey.tests.base import BaseTestCase
 class TestError(Exception):
     def __init__(self, m=None):
         self._m = m
+
     def __repr__(self):
-        return 'TestError(%s)' % self._m
+        return "TestError(%s)" % self._m
+
 
 class ExcCounter(Exception):
     counter = 0
+
     def __init__(self):
         ExcCounter.counter += 1
         self._v = ExcCounter.counter
-    def __repr__(self):
-        return 'ExcCounter(%s)' % self._v
 
+    def __repr__(self):
+        return "ExcCounter(%s)" % self._v
 
 
 class TestQueue(BaseTestCase):
@@ -128,6 +131,7 @@ class TestQueue(BaseTestCase):
 
     def test_revoke_task(self):
         state = {}
+
         @self.huey.task()
         def task_a(n):
             state[n] = n  # Modify some state for extra visibility.
@@ -170,6 +174,7 @@ class TestQueue(BaseTestCase):
 
     def test_revoke_task_instance(self):
         state = {}
+
         @self.huey.task()
         def task_a(n):
             state[n] = n
@@ -215,6 +220,7 @@ class TestQueue(BaseTestCase):
 
     def test_revoke_task_instance_persistent(self):
         state = []
+
         @self.huey.task()
         def task_a(n):
             state.append(n)
@@ -249,6 +255,7 @@ class TestQueue(BaseTestCase):
 
     def test_revoke_by_id(self):
         state = []
+
         @self.huey.task()
         def task_a(n):
             state.append(n)
@@ -333,7 +340,8 @@ class TestQueue(BaseTestCase):
 
     def test_revoke_periodic(self):
         state = [0]
-        @self.huey.periodic_task(crontab(minute='0'))
+
+        @self.huey.periodic_task(crontab(minute="0"))
         def task_p():
             state[0] = state[0] + 1
 
@@ -369,6 +377,7 @@ class TestQueue(BaseTestCase):
 
     def test_reschedule(self):
         state = []
+
         @self.huey.task()
         def task_a(n):
             state.append(n)
@@ -512,7 +521,7 @@ class TestQueue(BaseTestCase):
         self.assertEqual(self.huey.scheduled_count(), 1)
 
         # Simulate consumer running the scheduler after 60s elapsed.
-        task, = self.huey.read_schedule(timestamp=seconds(60))
+        (task,) = self.huey.read_schedule(timestamp=seconds(60))
         self.assertEqual(task.expires, 5)  # Expire time is present.
         self.huey.enqueue(task)
 
@@ -550,7 +559,7 @@ class TestQueue(BaseTestCase):
         @self.huey.task()
         def task_e(n):
             if n == 0:
-                raise TestError('uh-oh')
+                raise TestError("uh-oh")
             return n + 1
 
         re = task_e(0)
@@ -558,8 +567,8 @@ class TestQueue(BaseTestCase):
         self.assertEqual(self.huey.result_count(), 1)
 
         err = self.trap_exception(re)
-        self.assertEqual(err.metadata['error'], 'TestError(uh-oh)')
-        self.assertEqual(err.metadata['retries'], 0)
+        self.assertEqual(err.metadata["error"], "TestError(uh-oh)")
+        self.assertEqual(err.metadata["retries"], 0)
 
         self.assertEqual(self.huey.result_count(), 0)
         self.assertEqual(len(self.huey), 0)
@@ -578,7 +587,7 @@ class TestQueue(BaseTestCase):
         r = task_o(1)
         self.assertTrue(self.execute_next() is None)
         exc = self.trap_exception(r)
-        self.assertEqual(exc.metadata['error'], 'TaskException()')
+        self.assertEqual(exc.metadata["error"], "TaskException()")
 
     def test_retry(self):
         @self.huey.task(retries=1)
@@ -601,8 +610,8 @@ class TestQueue(BaseTestCase):
         # Attempting to resolve the result value will raise a TaskException,
         # which wraps the original error from the task.
         task_error = self.trap_exception(r)
-        self.assertEqual(task_error.metadata['error'], 'ExcCounter(1)')
-        self.assertEqual(task_error.metadata['retries'], 1)
+        self.assertEqual(task_error.metadata["error"], "ExcCounter(1)")
+        self.assertEqual(task_error.metadata["retries"], 1)
         self.assertEqual(len(self.huey), 1)
         self.assertEqual(self.huey.result_count(), 0)
 
@@ -617,7 +626,7 @@ class TestQueue(BaseTestCase):
         # it to re-read. Attempting to read again will just return the cached
         # value.
         task_error = self.trap_exception(r)
-        self.assertEqual(task_error.metadata['error'], 'ExcCounter(1)')
+        self.assertEqual(task_error.metadata["error"], "ExcCounter(1)")
         self.assertEqual(self.huey.result_count(), 1)  # No change.
 
         # Reset the state of the result object in order to be able to read.
@@ -625,8 +634,8 @@ class TestQueue(BaseTestCase):
 
         # As expected, the error occurs again.
         task_error = self.trap_exception(r)
-        self.assertEqual(task_error.metadata['error'], 'ExcCounter(2)')
-        self.assertEqual(task_error.metadata['retries'], 0)
+        self.assertEqual(task_error.metadata["error"], "ExcCounter(2)")
+        self.assertEqual(task_error.metadata["retries"], 0)
         self.assertEqual(len(self.huey), 0)  # Not enqueued again.
         self.assertEqual(self.huey.result_count(), 0)
 
@@ -643,8 +652,8 @@ class TestQueue(BaseTestCase):
         # which wraps the original error from the task. The task will not be
         # retried, so it is not enqueued again.
         task_error = self.trap_exception(r)
-        self.assertEqual(task_error.metadata['error'], 'ExcCounter(1)')
-        self.assertEqual(task_error.metadata['retries'], 0)
+        self.assertEqual(task_error.metadata["error"], "ExcCounter(1)")
+        self.assertEqual(task_error.metadata["retries"], 0)
         self.assertEqual(len(self.huey), 0)
         self.assertEqual(self.huey.result_count(), 0)
 
@@ -655,8 +664,8 @@ class TestQueue(BaseTestCase):
         # Attempting to resolve the result value will raise a TaskException,
         # which wraps the original error from the task.
         task_error = self.trap_exception(r)
-        self.assertEqual(task_error.metadata['error'], 'ExcCounter(2)')
-        self.assertEqual(task_error.metadata['retries'], 2)
+        self.assertEqual(task_error.metadata["error"], "ExcCounter(2)")
+        self.assertEqual(task_error.metadata["retries"], 2)
         self.assertEqual(len(self.huey), 1)
         self.assertEqual(self.huey.result_count(), 0)
         self.huey.dequeue()  # Throw away task.
@@ -665,19 +674,19 @@ class TestQueue(BaseTestCase):
         r = task_a.schedule(delay=-1, retries=3)
         self.assertTrue(self.execute_next() is None)
         task_error = self.trap_exception(r)
-        self.assertEqual(task_error.metadata['error'], 'ExcCounter(3)')
-        self.assertEqual(task_error.metadata['retries'], 3)
+        self.assertEqual(task_error.metadata["error"], "ExcCounter(3)")
+        self.assertEqual(task_error.metadata["retries"], 3)
         self.assertEqual(len(self.huey), 1)
         self.assertEqual(self.huey.result_count(), 0)
 
     def test_retry_periodic(self):
         state = [0]
 
-        @self.huey.periodic_task(crontab(hour='0'), retries=2)
+        @self.huey.periodic_task(crontab(hour="0"), retries=2)
         def task_p():
             if state[0] == 0:
                 state[0] = 1
-                raise TestError('oops')
+                raise TestError("oops")
             elif state[0] == 1:
                 state[0] = 2
             else:
@@ -698,11 +707,12 @@ class TestQueue(BaseTestCase):
 
     def test_retry_to_success(self):
         state = [0]
+
         @self.huey.task(retries=2)
         def task_a():
             state[0] = state[0] + 1
             if state[0] != 3:
-                raise ValueError('try again')
+                raise ValueError("try again")
             return 1337
 
         r = task_a()
@@ -717,7 +727,7 @@ class TestQueue(BaseTestCase):
     def test_retry_delay(self):
         @self.huey.task(retries=2, retry_delay=60)
         def task_a():
-            raise ValueError('try again')
+            raise ValueError("try again")
 
         r = task_a()
         self.assertTrue(self.execute_next() is None)
@@ -725,7 +735,7 @@ class TestQueue(BaseTestCase):
 
         self.assertEqual(len(self.huey), 0)
         self.assertEqual(self.huey.scheduled_count(), 1)
-        task, = self.huey.scheduled()  # Dequeue the delayed retry.
+        (task,) = self.huey.scheduled()  # Dequeue the delayed retry.
         self.assertTrue(task.eta is not None)
         self.assertEqual(task.retries, 1)
         self.assertFalse(self.huey.ready_to_run(task))
@@ -736,14 +746,14 @@ class TestQueue(BaseTestCase):
     def test_retry_delay_periodic(self):
         @self.huey.periodic_task(crontab(), retries=2, retry_delay=60)
         def task_p():
-            raise ValueError('try again')
+            raise ValueError("try again")
 
         r = task_p()
         self.assertTrue(self.execute_next() is None)
 
         self.assertEqual(len(self.huey), 0)
         self.assertEqual(self.huey.scheduled_count(), 1)
-        task, = self.huey.scheduled()  # Dequeue the delayed retry.
+        (task,) = self.huey.scheduled()  # Dequeue the delayed retry.
         self.assertEqual(task.id, r.id)
         self.assertTrue(task.eta is not None)
         self.assertEqual(task.retries, 1)
@@ -759,7 +769,7 @@ class TestQueue(BaseTestCase):
         def task_a(n):
             state[0] = state[0] + n
             if state[0] < 2:
-                raise RetryTask('asdf')
+                raise RetryTask("asdf")
             return state[0]
 
         r = task_a(1)
@@ -817,8 +827,8 @@ class TestQueue(BaseTestCase):
             r.get()
         except TaskException as exc:
             metadata = exc.metadata
-        self.assertEqual(metadata['error'], 'CancelExecution()')
-        self.assertEqual(metadata['retries'], 1)
+        self.assertEqual(metadata["error"], "CancelExecution()")
+        self.assertEqual(metadata["retries"], 1)
         self.assertEqual(len(self.huey), 1)
 
     def test_cancel_execution_task_retries(self):
@@ -843,8 +853,8 @@ class TestQueue(BaseTestCase):
                 r.get()
             except TaskException as exc:
                 metadata = exc.metadata
-            self.assertEqual(metadata['error'], 'CancelExecution()')
-            self.assertEqual(metadata['retries'], retries)
+            self.assertEqual(metadata["error"], "CancelExecution()")
+            self.assertEqual(metadata["retries"], retries)
             if retries > 0:
                 self.assertEqual(len(self.huey), 1)
             else:
@@ -861,8 +871,8 @@ class TestQueue(BaseTestCase):
                 r.get()
             except TaskException as exc:
                 metadata = exc.metadata
-            self.assertEqual(metadata['error'], 'CancelExecution()')
-            self.assertEqual(metadata['retries'], retries)
+            self.assertEqual(metadata["error"], "CancelExecution()")
+            self.assertEqual(metadata["retries"], retries)
             self.assertEqual(len(self.huey), 1)
             r.reset()
 
@@ -895,7 +905,7 @@ class TestQueue(BaseTestCase):
         self.assertEqual(t0.id, r0.id)
         self.assertEqual(self.huey.read_schedule(timestamp), [])
 
-        tp1, = self.huey.read_schedule(datetime.datetime(2010, 1, 1))
+        (tp1,) = self.huey.read_schedule(datetime.datetime(2010, 1, 1))
         self.assertEqual(tp1.id, rp1.id)
 
         # Everything is cleared out.
@@ -904,15 +914,15 @@ class TestQueue(BaseTestCase):
         self.assertEqual(self.huey.scheduled_count(), 0)
 
     def test_read_periodic(self):
-        @self.huey.periodic_task(crontab(minute='*/15', hour='9-17'))
+        @self.huey.periodic_task(crontab(minute="*/15", hour="9-17"))
         def work():
             pass
 
-        @self.huey.periodic_task(crontab(minute='0', hour='21'))
+        @self.huey.periodic_task(crontab(minute="0", hour="21"))
         def sleep():
             pass
 
-        @self.huey.periodic_task(crontab(minute='0-30'))
+        @self.huey.periodic_task(crontab(minute="0-30"))
         def first_half():
             pass
 
@@ -921,13 +931,13 @@ class TestQueue(BaseTestCase):
             tasks = self.huey.read_periodic(dt)
             self.assertEqual([t.name for t in tasks], names)
 
-        assertPeriodic(0, 0, ['first_half'])
+        assertPeriodic(0, 0, ["first_half"])
         assertPeriodic(23, 59, [])
-        assertPeriodic(9, 0, ['work', 'first_half'])
-        assertPeriodic(9, 45, ['work'])
+        assertPeriodic(9, 0, ["work", "first_half"])
+        assertPeriodic(9, 45, ["work"])
         assertPeriodic(9, 46, [])
-        assertPeriodic(21, 0, ['sleep', 'first_half'])
-        assertPeriodic(21, 30, ['first_half'])
+        assertPeriodic(21, 0, ["sleep", "first_half"])
+        assertPeriodic(21, 30, ["first_half"])
         assertPeriodic(21, 31, [])
 
 
@@ -949,7 +959,7 @@ class TestDecorators(BaseTestCase):
         self.assertEqual(task.execute(), 4)
 
     def test_task_parameters(self):
-        @self.huey.task(retries=2, retry_delay=1, context=True, name='tb')
+        @self.huey.task(retries=2, retry_delay=1, context=True, name="tb")
         def task_b(n, task=None):
             return (n + 1, task.id, task.retries, task.retry_delay)
 
@@ -966,7 +976,7 @@ class TestDecorators(BaseTestCase):
         self.assertEqual(tid, task.id)
 
     def test_periodic_task(self):
-        @self.huey.periodic_task(crontab(minute='1'))
+        @self.huey.periodic_task(crontab(minute="1"))
         def task_p():
             return 123
 
@@ -985,7 +995,7 @@ class TestDecorators(BaseTestCase):
         self.assertEqual(task.retry_delay, 10)
 
     def test_call_periodic_task(self):
-        @self.huey.periodic_task(crontab(minute='1'))
+        @self.huey.periodic_task(crontab(minute="1"))
         def task_p():
             return 123
 
@@ -1000,38 +1010,43 @@ class TestDecorators(BaseTestCase):
         class DB(object):
             def __init__(self):
                 self.state = []
+
             def __enter__(self):
-                self.state.append('open')
+                self.state.append("open")
+
             def __exit__(self, exc_type, exc_val, exc_tb):
-                self.state.append('close')
+                self.state.append("close")
+
             def get_state(self):
                 self.state, ret = [], self.state
                 return ret
+
         db = DB()
         self.assertEqual(db.get_state(), [])
 
         @self.huey.context_task(db)
         def task_c(n):
             if n < 0:
-                raise ValueError('bad value')
+                raise ValueError("bad value")
             return n + 1
 
         res = task_c(2)
         self.assertEqual(self.execute_next(), 3)
-        self.assertEqual(db.get_state(), ['open', 'close'])
+        self.assertEqual(db.get_state(), ["open", "close"])
 
         res = task_c(-1)
         self.assertEqual(db.get_state(), [])
         self.assertTrue(self.execute_next() is None)
-        self.assertEqual(db.get_state(), ['open', 'close'])
+        self.assertEqual(db.get_state(), ["open", "close"])
 
     def test_dynamic_periodic_tasks(self):
-        def ptask(): pass
+        def ptask():
+            pass
 
         @self.huey.task()
         def make_ptask(every_n):
-            name = 'ptask_%s' % every_n
-            sched = crontab('*/%s' % every_n)
+            name = "ptask_%s" % every_n
+            sched = crontab("*/%s" % every_n)
             self.huey.periodic_task(sched, name=name)(ptask)
 
         # Create two tasks dynamically.
@@ -1049,8 +1064,8 @@ class TestDecorators(BaseTestCase):
         self.execute_next()
         self.execute_next()
 
-        assertPeriodic(dt, ['ptask_10', 'ptask_5'])
-        assertPeriodic(datetime.datetime(2019, 1, 1, 0, 5), ['ptask_5'])
+        assertPeriodic(dt, ["ptask_10", "ptask_5"])
+        assertPeriodic(datetime.datetime(2019, 1, 1, 0, 5), ["ptask_5"])
         assertPeriodic(datetime.datetime(2019, 1, 1, 0, 6), [])
 
 
@@ -1096,8 +1111,9 @@ class TestTaskHooks(BaseTestCase):
         err_result = task_a(None)  # Can't add 1 to None!
         self.assertTrue(self.execute_next() is None)
         self.assertEqual(pre_state, [result.id, err_result.id])
-        self.assertEqual(post_state, [(result.id, 4, None),
-                                      (err_result.id, None, 'TypeError')])
+        self.assertEqual(
+            post_state, [(result.id, 4, None), (err_result.id, None, "TypeError")]
+        )
 
     def test_hook_unregister(self):
         @self.huey.task()
@@ -1110,6 +1126,7 @@ class TestTaskHooks(BaseTestCase):
         @self.huey.pre_execute()
         def test_pre_exec(task):
             pre_state.append(task.id)
+
         @self.huey.post_execute()
         def test_post_exec(task, val, exc):
             post_state.append(task.id)
@@ -1120,8 +1137,8 @@ class TestTaskHooks(BaseTestCase):
         self.assertEqual(pre_state, [r.id])
         self.assertEqual(post_state, [r.id])
 
-        self.assertTrue(self.huey.unregister_pre_execute('test_pre_exec'))
-        self.assertTrue(self.huey.unregister_post_execute('test_post_exec'))
+        self.assertTrue(self.huey.unregister_pre_execute("test_pre_exec"))
+        self.assertTrue(self.huey.unregister_post_execute("test_post_exec"))
 
         r2 = task_a(4)
         self.assertEqual(self.execute_next(), 5)
@@ -1129,8 +1146,8 @@ class TestTaskHooks(BaseTestCase):
         self.assertEqual(len(post_state), 1)
 
         # Already unregistered, returns False.
-        self.assertFalse(self.huey.unregister_pre_execute('test_pre_exec'))
-        self.assertFalse(self.huey.unregister_post_execute('test_post_exec'))
+        self.assertFalse(self.huey.unregister_pre_execute("test_pre_exec"))
+        self.assertFalse(self.huey.unregister_post_execute("test_post_exec"))
 
     def test_task_hook_errors(self):
         @self.huey.task()
@@ -1142,14 +1159,16 @@ class TestTaskHooks(BaseTestCase):
 
         @self.huey.pre_execute()
         def test_pre_exec1(task):
-            raise ValueError('flaky pre hook')
+            raise ValueError("flaky pre hook")
+
         @self.huey.pre_execute()
         def test_pre_exec2(task):
             pre_state.append(task.id)
 
         @self.huey.post_execute()
         def test_post_exec1(task, val, exc):
-            raise ValueError('flaky post hook')
+            raise ValueError("flaky post hook")
+
         @self.huey.post_execute()
         def test_post_exec2(task, val, exc):
             post_state.append(task.id)
@@ -1176,22 +1195,31 @@ class TestTaskChaining(BaseTestCase):
         @self.huey.task()
         def stateful(v1=None, v2=None, v3=None):
             state = {
-                'v1': v1 + 1 if v1 is not None else 0,
-                'v2': v2 + 2 if v2 is not None else 0,
-                'v3': v3 + 3 if v3 is not None else 0}
+                "v1": v1 + 1 if v1 is not None else 0,
+                "v2": v2 + 2 if v2 is not None else 0,
+                "v3": v3 + 3 if v3 is not None else 0,
+            }
             return state
 
         pipe = stateful.s().then(stateful).then(stateful)
-        self.assertPipe(pipe, [
-            {'v1': 0, 'v2': 0, 'v3': 0},
-            {'v1': 1, 'v2': 2, 'v3': 3},
-            {'v1': 2, 'v2': 4, 'v3': 6}])
+        self.assertPipe(
+            pipe,
+            [
+                {"v1": 0, "v2": 0, "v3": 0},
+                {"v1": 1, "v2": 2, "v3": 3},
+                {"v1": 2, "v2": 4, "v3": 6},
+            ],
+        )
 
         pipe = stateful.s(v1=4).then(stateful, v2=6).then(stateful, v2=1, v3=8)
-        self.assertPipe(pipe, [
-            {'v1': 5, 'v2': 0, 'v3': 0},
-            {'v1': 6, 'v2': 8, 'v3': 3},
-            {'v1': 7, 'v2': 3, 'v3': 11}])
+        self.assertPipe(
+            pipe,
+            [
+                {"v1": 5, "v2": 0, "v3": 0},
+                {"v1": 6, "v2": 8, "v3": 3},
+                {"v1": 7, "v2": 3, "v3": 11},
+            ],
+        )
 
     def test_partial(self):
         @self.huey.task()
@@ -1212,6 +1240,7 @@ class TestTaskChaining(BaseTestCase):
         @self.huey.task()
         def add(a, b):
             return a + b
+
         @self.huey.task()
         def mul(a, b):
             return a * b
@@ -1250,6 +1279,7 @@ class TestTaskChaining(BaseTestCase):
 
     def test_error_callback(self):
         state = []
+
         @self.huey.task()
         def task_a(n):
             raise TestError(n)
@@ -1265,13 +1295,13 @@ class TestTaskChaining(BaseTestCase):
         self.assertRaises(TaskException, result.get)
         self.assertEqual(len(self.huey), 1)
         self.assertEqual(self.execute_next(), 1337)
-        self.assertEqual(state, ['TestError(0)'])
+        self.assertEqual(state, ["TestError(0)"])
 
     def test_pipeline_error_midway(self):
         @self.huey.task()
         def task_a(n):
             if n < 0:
-                raise TestError('below zero')
+                raise TestError("below zero")
             return n - 1
 
         # 1, 0, -1, ??.
@@ -1334,8 +1364,8 @@ class TestTaskChaining(BaseTestCase):
 
         self.assertEqual(self.execute_next(), 3)  # Second error handler.
 
-        self.assertEqual(state1, ['TestError(0)'])
-        self.assertEqual(state2, [(3, 'TestError(0)')])
+        self.assertEqual(state1, ["TestError(0)"])
+        self.assertEqual(state2, [(3, "TestError(0)")])
 
         self.assertEqual(r1(), 0)
         self.assertRaises(TaskException, r2.get)
@@ -1345,7 +1375,7 @@ class TestTaskChaining(BaseTestCase):
 class TestTaskLocking(BaseTestCase):
     def test_task_locking(self):
         @self.huey.task(retries=1)
-        @self.huey.lock_task('lock_a')
+        @self.huey.lock_task("lock_a")
         def task_a(n):
             return n + 1
 
@@ -1353,22 +1383,22 @@ class TestTaskLocking(BaseTestCase):
         self.assertEqual(self.execute_next(), 4)
 
         task_a(4)
-        with self.huey.lock_task('lock_x'):
-            self.assertFalse(self.huey.is_locked('lock_a'))
-            self.assertTrue(self.huey.is_locked('lock_x'))
+        with self.huey.lock_task("lock_x"):
+            self.assertFalse(self.huey.is_locked("lock_a"))
+            self.assertTrue(self.huey.is_locked("lock_x"))
             self.assertEqual(self.execute_next(), 5)
 
         # Ensure locks were cleared.
-        self.assertFalse(self.huey.is_locked('lock_a'))
-        self.assertFalse(self.huey.is_locked('lock_x'))
+        self.assertFalse(self.huey.is_locked("lock_a"))
+        self.assertFalse(self.huey.is_locked("lock_x"))
 
         r = task_a(5)
-        with self.huey.lock_task('lock_a'):
-            self.assertTrue(self.huey.is_locked('lock_a'))
+        with self.huey.lock_task("lock_a"):
+            self.assertTrue(self.huey.is_locked("lock_a"))
             self.assertTrue(self.execute_next() is None)
 
         exc = self.trap_exception(r)
-        self.assertTrue('unable to set lock' in str(exc))
+        self.assertTrue("unable to set lock" in str(exc))
 
         # Task failed due to lock, will be retried, which succeeds now that the
         # lock is released.
@@ -1377,30 +1407,32 @@ class TestTaskLocking(BaseTestCase):
 
 class TestHueyAPIs(BaseTestCase):
     def test_flush_locks(self):
-        with self.huey.lock_task('lock1'):
-            with self.huey.lock_task('lock2'):
+        with self.huey.lock_task("lock1"):
+            with self.huey.lock_task("lock2"):
                 flushed = self.huey.flush_locks()
 
-        self.assertEqual(flushed, set(['lock1', 'lock2']))
+        self.assertEqual(flushed, set(["lock1", "lock2"]))
         self.assertEqual(self.huey.flush_locks(), set())
 
     def test_flush_named_locks(self):
-        self.huey.put_if_empty('%s.lock.lock1' % self.huey.name, '1')
-        self.huey.put_if_empty('%s.lock.lock2' % self.huey.name, '1')
-        with self.huey.lock_task('lock3'):
-            flushed = self.huey.flush_locks('lock1', 'lock2', 'lockx')
+        self.huey.put_if_empty("%s.lock.lock1" % self.huey.name, "1")
+        self.huey.put_if_empty("%s.lock.lock2" % self.huey.name, "1")
+        with self.huey.lock_task("lock3"):
+            flushed = self.huey.flush_locks("lock1", "lock2", "lockx")
 
-        self.assertEqual(flushed, set(['lock1', 'lock2', 'lock3']))
+        self.assertEqual(flushed, set(["lock1", "lock2", "lock3"]))
         self.assertEqual(self.huey.flush_locks(), set())
 
     def test_serialize_deserialize(self):
         @self.huey.task()
         def task_a(n):
             return n
+
         @self.huey.task()
         def task_b(n):
             return n
-        @self.huey.periodic_task(crontab(minute='1'))
+
+        @self.huey.periodic_task(crontab(minute="1"))
         def task_p():
             return
 
@@ -1413,28 +1445,34 @@ class TestHueyAPIs(BaseTestCase):
         self.assertEqual(tp, S(tp))
 
     def test_serialize_deserialize_signed(self):
-        self.huey.serializer = SignedSerializer(secret='test secret')
+        self.huey.serializer = SignedSerializer(secret="test secret")
         self.test_serialize_deserialize()
 
     def test_put_get(self):
-        tests = ('v1', 1, 1., 0, None,
-                 [0, 1, 2],
-                 (2, 3, 4),
-                 {'k1': 'v1', 'k2': 'v2'},
-                 set('abc'))
+        tests = (
+            "v1",
+            1,
+            1.0,
+            0,
+            None,
+            [0, 1, 2],
+            (2, 3, 4),
+            {"k1": "v1", "k2": "v2"},
+            set("abc"),
+        )
         for test in tests:
-            self.huey.put('key', test)
-            self.assertEqual(self.huey.get('key'), test)
+            self.huey.put("key", test)
+            self.assertEqual(self.huey.get("key"), test)
 
     def test_unsupported(self):
-        FooHuey = _unsupported('FooHuey', 'foo')
+        FooHuey = _unsupported("FooHuey", "foo")
         self.assertRaises(ConfigurationError, FooHuey)
 
 
 class TestMultipleHuey(BaseTestCase):
     def test_multiple_huey(self):
         huey1 = self.huey
-        huey2 = MemoryHuey('huey2', utc=False)
+        huey2 = MemoryHuey("huey2", utc=False)
 
         @huey1.task()
         def task_a(n):
@@ -1527,15 +1565,15 @@ class TestDocstring(BaseTestCase):
     def test_docstring_preserved(self):
         @self.huey.task()
         def add(a, b):
-            'Adds two numbers.'
+            "Adds two numbers."
             return a + b
 
-        @self.huey.periodic_task(crontab(minute='*'))
+        @self.huey.periodic_task(crontab(minute="*"))
         def ptask():
-            'Sample periodic task.'
+            "Sample periodic task."
 
-        self.assertEqual(inspect.getdoc(add), 'Adds two numbers.')
-        self.assertEqual(inspect.getdoc(ptask), 'Sample periodic task.')
+        self.assertEqual(inspect.getdoc(add), "Adds two numbers.")
+        self.assertEqual(inspect.getdoc(ptask), "Sample periodic task.")
 
 
 class TestCustomErrorMetadata(BaseTestCase):
@@ -1545,12 +1583,13 @@ class TestCustomErrorMetadata(BaseTestCase):
                 err = super(CustomError, self).build_error_result(task, exc)
                 err.update(name=task.name, args=task.args)
                 return err
+
         return CustomError(utc=False)
 
     def test_custom_error(self):
         @self.huey.task()
         def task_e(n):
-            raise TestError('uh-oh')
+            raise TestError("uh-oh")
 
         re = task_e(0)
         self.assertTrue(self.execute_next() is None)
@@ -1558,10 +1597,10 @@ class TestCustomErrorMetadata(BaseTestCase):
 
         # Resolves the result handle, which re-raises the error.
         err = self.trap_exception(re)
-        self.assertEqual(err.metadata['error'], 'TestError(uh-oh)')
-        self.assertEqual(err.metadata['retries'], 0)
-        self.assertEqual(err.metadata['name'], 'task_e')
-        self.assertEqual(err.metadata['args'], (0,))
+        self.assertEqual(err.metadata["error"], "TestError(uh-oh)")
+        self.assertEqual(err.metadata["retries"], 0)
+        self.assertEqual(err.metadata["name"], "task_e")
+        self.assertEqual(err.metadata["args"], (0,))
 
         self.assertEqual(self.huey.result_count(), 0)
         self.assertEqual(len(self.huey), 0)

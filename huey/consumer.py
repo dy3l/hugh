@@ -25,14 +25,14 @@ from huey.utils import time_clock
 
 
 class BaseProcess(object):
-    process_name = 'BaseProcess'
+    process_name = "BaseProcess"
 
     def __init__(self, huey):
         self.huey = huey
         self._logger = self.create_logger()
 
     def create_logger(self):
-        return logging.getLogger('huey.consumer.%s' % self.process_name)
+        return logging.getLogger("huey.consumer.%s" % self.process_name)
 
     def initialize(self):
         pass
@@ -49,7 +49,7 @@ class BaseProcess(object):
         sleep_time = nseconds - (time_clock() - start_ts)
         if sleep_time <= 0:
             return
-        self._logger.debug('Sleeping for %s', sleep_time)
+        self._logger.debug("Sleeping for %s", sleep_time)
         # Recompute time to sleep to improve accuracy in case the process was
         # pre-empted by the kernel while logging.
         sleep_time = nseconds - (time_clock() - start_ts)
@@ -79,7 +79,8 @@ class Worker(BaseProcess):
     Will pull tasks from the queue, executing them or adding them to the
     schedule if they are set to run in the future.
     """
-    process_name = 'Worker'
+
+    process_name = "Worker"
 
     def __init__(self, huey, default_delay, max_delay, backoff):
         self.delay = self.default_delay = default_delay
@@ -108,7 +109,7 @@ class Worker(BaseProcess):
         try:
             task = self.huey.dequeue()
         except Exception:
-            self._logger.exception('Error reading from queue')
+            self._logger.exception("Error reading from queue")
             self.sleep()
         else:
             if task is not None:
@@ -116,8 +117,9 @@ class Worker(BaseProcess):
                 try:
                     self.huey.execute(task, now)
                 except Exception as exc:
-                    self._logger.exception('Unhandled error during execution '
-                                           'of task %s.', task.id)
+                    self._logger.exception(
+                        "Unhandled error during execution " "of task %s.", task.id
+                    )
             elif not self.huey.storage.blocking:
                 self.sleep()
 
@@ -138,8 +140,9 @@ class Scheduler(BaseProcess):
     If periodic tasks are enabled, the scheduler will wake up every 60 seconds
     to enqueue any periodic tasks that should be run.
     """
+
     periodic_task_seconds = 60
-    process_name = 'Scheduler'
+    process_name = "Scheduler"
 
     def __init__(self, huey, interval, periodic):
         super(Scheduler, self).__init__(huey)
@@ -153,16 +156,16 @@ class Scheduler(BaseProcess):
         current = self._next_loop
         self._next_loop += self.interval
         if self._next_loop < time_clock():
-            self._logger.debug('scheduler skipping iteration to avoid race.')
+            self._logger.debug("scheduler skipping iteration to avoid race.")
             return
 
         try:
             task_list = self.huey.read_schedule(now)
         except Exception:
-            self._logger.exception('Error reading schedule.')
+            self._logger.exception("Error reading schedule.")
         else:
             for task in task_list:
-                self._logger.debug('Enqueueing %s', task)
+                self._logger.debug("Enqueueing %s", task)
                 self.huey.enqueue(task)
 
         if self.periodic and self._next_periodic <= time_clock():
@@ -172,9 +175,9 @@ class Scheduler(BaseProcess):
         self.sleep_for_interval(current, self.interval)
 
     def enqueue_periodic_tasks(self, now):
-        self._logger.debug('Checking periodic tasks')
+        self._logger.debug("Checking periodic tasks")
         for task in self.huey.read_periodic(now):
-            self._logger.info('Enqueueing periodic task %s.', task)
+            self._logger.info("Enqueueing periodic task %s.", task)
             self.huey.enqueue(task)
 
 
@@ -182,6 +185,7 @@ class Environment(object):
     """
     Provide a common interface to the supported concurrent environments.
     """
+
     def get_stop_flag(self):
         raise NotImplementedError
 
@@ -214,6 +218,7 @@ class GreenletEnvironment(Environment):
             gevent.sleep()
             runnable()
             gevent.sleep()
+
         return Greenlet(run=run_wrapper)
 
     def is_alive(self, proc):
@@ -245,23 +250,36 @@ class Consumer(object):
     Consumer sets up and coordinates the execution of the workers and scheduler
     and registers signal handlers.
     """
+
     # Simplify providing custom implementations. See _create_worker and
     # _create_scheduler if you need more sophisticated overrides.
     worker_class = Worker
     scheduler_class = Scheduler
 
-    def __init__(self, huey, workers=1, periodic=True, initial_delay=0.1,
-                 backoff=1.15, max_delay=10.0, scheduler_interval=1,
-                 worker_type=WORKER_THREAD, check_worker_health=True,
-                 health_check_interval=10, flush_locks=False,
-                 extra_locks=None):
+    def __init__(
+        self,
+        huey,
+        workers=1,
+        periodic=True,
+        initial_delay=0.1,
+        backoff=1.15,
+        max_delay=10.0,
+        scheduler_interval=1,
+        worker_type=WORKER_THREAD,
+        check_worker_health=True,
+        health_check_interval=10,
+        flush_locks=False,
+        extra_locks=None,
+    ):
 
-        self._logger = logging.getLogger('huey.consumer')
+        self._logger = logging.getLogger("huey.consumer")
         if huey.immediate:
-            self._logger.warning('Consumer initialized with Huey instance '
-                                 'that has "immediate" mode enabled. This '
-                                 'must be disabled before the consumer can '
-                                 'be run.')
+            self._logger.warning(
+                "Consumer initialized with Huey instance "
+                'that has "immediate" mode enabled. This '
+                "must be disabled before the consumer can "
+                "be run."
+            )
         self.huey = huey
         self.workers = workers  # Number of workers.
         self.periodic = periodic  # Enable periodic task scheduler?
@@ -272,10 +290,13 @@ class Consumer(object):
         # Ensure that the scheduler runs at an interval between 1 and 60s.
         self.scheduler_interval = max(min(scheduler_interval, 60), 1)
         if 60 % self.scheduler_interval != 0:
-            raise ConfigurationError('Scheduler interval must be a factor '
-                                     'of 60, e.g. 1, 2, 3, 4, 5, 6, 10, 12...')
+            raise ConfigurationError(
+                "Scheduler interval must be a factor "
+                "of 60, e.g. 1, 2, 3, 4, 5, 6, 10, 12..."
+            )
 
-        if worker_type == 'gevent': worker_type = WORKER_GREENLET
+        if worker_type == "gevent":
+            worker_type = WORKER_GREENLET
         self.worker_type = worker_type  # What process model are we using?
 
         # Configure health-check and consumer main-loop attributes.
@@ -297,18 +318,18 @@ class Consumer(object):
         # In the event the consumer was killed while running a task that held
         # a lock, this ensures that all locks are flushed before starting.
         if flush_locks or extra_locks:
-            lock_names = extra_locks.split(',') if extra_locks else ()
+            lock_names = extra_locks.split(",") if extra_locks else ()
             self.flush_locks(*lock_names)
 
         # Create the scheduler process (but don't start it yet).
         scheduler = self._create_scheduler()
-        self.scheduler = self._create_process(scheduler, 'Scheduler')
+        self.scheduler = self._create_process(scheduler, "Scheduler")
 
         # Create the worker process(es) (also not started yet).
         self.worker_threads = []
         for i in range(workers):
             worker = self._create_worker()
-            process = self._create_process(worker, 'Worker-%d' % (i + 1))
+            process = self._create_process(worker, "Worker-%d" % (i + 1))
 
             # The worker threads are stored as [(worker impl, worker_t), ...].
             # The worker impl is not currently referenced in any consumer code,
@@ -316,16 +337,16 @@ class Consumer(object):
             self.worker_threads.append((worker, process))
 
     def flush_locks(self, *names):
-        self._logger.debug('Flushing locks before starting up.')
+        self._logger.debug("Flushing locks before starting up.")
         flushed = self.huey.flush_locks(*names)
         if flushed:
-            self._logger.warning('Found stale locks: %s' % (
-                ', '.join(key for key in flushed)))
+            self._logger.warning(
+                "Found stale locks: %s" % (", ".join(key for key in flushed))
+            )
 
     def get_environment(self, worker_type):
         if worker_type not in WORKER_TO_ENVIRONMENT:
-            raise ValueError('worker_type must be one of %s.' %
-                             ', '.join(WORKER_TYPES))
+            raise ValueError("worker_type must be one of %s." % ", ".join(WORKER_TYPES))
         return WORKER_TO_ENVIRONMENT[worker_type]()
 
     def _create_worker(self):
@@ -333,19 +354,20 @@ class Consumer(object):
             huey=self.huey,
             default_delay=self.default_delay,
             max_delay=self.max_delay,
-            backoff=self.backoff)
+            backoff=self.backoff,
+        )
 
     def _create_scheduler(self):
         return self.scheduler_class(
-            huey=self.huey,
-            interval=self.scheduler_interval,
-            periodic=self.periodic)
+            huey=self.huey, interval=self.scheduler_interval, periodic=self.periodic
+        )
 
     def _create_process(self, process, name):
         """
         Repeatedly call the `loop()` method of the given process. Unhandled
         exceptions in the `loop()` method will cause the process to terminate.
         """
+
         def _run():
             if self.worker_type == WORKER_PROCESS:
                 self._set_child_signal_handlers()
@@ -357,9 +379,10 @@ class Consumer(object):
             except KeyboardInterrupt:
                 pass
             except:
-                self._logger.exception('Process %s died!', name)
+                self._logger.exception("Process %s died!", name)
             finally:
                 process.shutdown()
+
         return self.environment.create_process(_run, name)
 
     def start(self):
@@ -368,24 +391,29 @@ class Consumer(object):
         """
         if self.huey.immediate:
             raise ConfigurationError(
-                'Consumer cannot be run with Huey instances where immediate '
-                'is enabled. Please check your configuration and ensure that '
-                '"huey.immediate = False".')
+                "Consumer cannot be run with Huey instances where immediate "
+                "is enabled. Please check your configuration and ensure that "
+                '"huey.immediate = False".'
+            )
 
         # Log startup message.
-        self._logger.info('Huey consumer started with %s %s, PID %s at %s',
-                          self.workers, self.worker_type, os.getpid(),
-                          self.huey._get_timestamp())
-        self._logger.info('Scheduler runs every %s second(s).',
-                          self.scheduler_interval)
-        self._logger.info('Periodic tasks are %s.',
-                          'enabled' if self.periodic else 'disabled')
+        self._logger.info(
+            "Huey consumer started with %s %s, PID %s at %s",
+            self.workers,
+            self.worker_type,
+            os.getpid(),
+            self.huey._get_timestamp(),
+        )
+        self._logger.info("Scheduler runs every %s second(s).", self.scheduler_interval)
+        self._logger.info(
+            "Periodic tasks are %s.", "enabled" if self.periodic else "disabled"
+        )
 
-        msg = ['The following commands are available:']
+        msg = ["The following commands are available:"]
         for command in self.huey._registry._registry:
-            msg.append('+ %s' % command)
+            msg.append("+ %s" % command)
 
-        self._logger.info('\n'.join(msg))
+        self._logger.info("\n".join(msg))
 
         # Start the scheduler and workers.
         self.scheduler.start()
@@ -404,17 +432,17 @@ class Consumer(object):
         """
         self.stop_flag.set()
         if graceful:
-            self._logger.info('Shutting down gracefully...')
+            self._logger.info("Shutting down gracefully...")
             try:
                 for _, worker_process in self.worker_threads:
                     worker_process.join()
                 self.scheduler.join()
             except KeyboardInterrupt:
-                self._logger.info('Received request to shut down now.')
+                self._logger.info("Received request to shut down now.")
             else:
-                self._logger.info('All workers have stopped.')
+                self._logger.info("All workers have stopped.")
         else:
-            self._logger.info('Shutting down')
+            self._logger.info("Shutting down")
 
     def run(self):
         """
@@ -428,10 +456,10 @@ class Consumer(object):
             try:
                 self.stop_flag.wait(timeout=timeout)
             except KeyboardInterrupt:
-                self._logger.info('Received SIGINT')
+                self._logger.info("Received SIGINT")
                 self.stop(graceful=True)
             except:
-                self._logger.exception('Error in consumer.')
+                self._logger.exception("Error in consumer.")
                 self.stop()
             else:
                 if self._received_signal:
@@ -449,25 +477,25 @@ class Consumer(object):
         self.huey.notify_interrupted_tasks()
 
         if self._restart:
-            self._logger.info('Consumer will restart.')
+            self._logger.info("Consumer will restart.")
             python = sys.executable
             os.execl(python, python, *sys.argv)
         else:
-            self._logger.info('Consumer exiting.')
+            self._logger.info("Consumer exiting.")
 
     def check_worker_health(self):
         """
         Check the health of the worker processes. Workers that have died will
         be replaced with new workers.
         """
-        self._logger.debug('Checking worker health.')
+        self._logger.debug("Checking worker health.")
         workers = []
         restart_occurred = False
         for i, (worker, worker_t) in enumerate(self.worker_threads):
             if not self.environment.is_alive(worker_t):
-                self._logger.warning('Worker %d died, restarting.', i + 1)
+                self._logger.warning("Worker %d died, restarting.", i + 1)
                 worker = self._create_worker()
-                worker_t = self._create_process(worker, 'Worker-%d' % (i + 1))
+                worker_t = self._create_process(worker, "Worker-%d" % (i + 1))
                 worker_t.start()
                 restart_occurred = True
             workers.append((worker, worker_t))
@@ -475,32 +503,32 @@ class Consumer(object):
         if restart_occurred:
             self.worker_threads = workers
         else:
-            self._logger.debug('Workers are up and running.')
+            self._logger.debug("Workers are up and running.")
 
         if not self.environment.is_alive(self.scheduler):
-            self._logger.warning('Scheduler died, restarting.')
+            self._logger.warning("Scheduler died, restarting.")
             scheduler = self._create_scheduler()
-            self.scheduler = self._create_process(scheduler, 'Scheduler')
+            self.scheduler = self._create_process(scheduler, "Scheduler")
             self.scheduler.start()
         else:
-            self._logger.debug('Scheduler is up and running.')
+            self._logger.debug("Scheduler is up and running.")
 
         return not restart_occurred
 
     def _set_signal_handlers(self):
         signal.signal(signal.SIGTERM, self._handle_stop_signal)
         signal.signal(signal.SIGINT, signal.default_int_handler)
-        if hasattr(signal, 'SIGHUP'):
+        if hasattr(signal, "SIGHUP"):
             signal.signal(signal.SIGHUP, self._handle_restart_signal)
 
     def _handle_stop_signal(self, sig_num, frame):
-        self._logger.info('Received SIGTERM')
+        self._logger.info("Received SIGTERM")
         self._received_signal = True
         self._restart = False
         self._graceful = False
 
     def _handle_restart_signal(self, sig_num, frame):
-        self._logger.info('Received SIGHUP, will restart')
+        self._logger.info("Received SIGHUP, will restart")
         self._received_signal = True
         self._restart = True
 
@@ -512,7 +540,7 @@ class Consumer(object):
         # shutdown.
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         signal.signal(signal.SIGTERM, self._handle_stop_signal_worker)
-        if hasattr(signal, 'SIGHUP'):
+        if hasattr(signal, "SIGHUP"):
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     def _handle_stop_signal_worker(self, sig_num, frame):

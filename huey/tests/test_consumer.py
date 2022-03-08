@@ -13,6 +13,7 @@ class TestConsumer(Consumer):
     class _Scheduler(Scheduler):
         def sleep_for_interval(self, current, interval):
             pass
+
     scheduler_class = _Scheduler
 
 
@@ -85,32 +86,32 @@ class TestConsumerIntegration(BaseTestCase):
     def test_consumer_periodic_tasks(self):
         state = []
 
-        @self.huey.periodic_task(crontab(minute='*/10'))
+        @self.huey.periodic_task(crontab(minute="*/10"))
         def task_p1():
-            state.append('p1')
+            state.append("p1")
 
-        @self.huey.periodic_task(crontab(minute='0', hour='0'))
+        @self.huey.periodic_task(crontab(minute="0", hour="0"))
         def task_p2():
-            state.append('p2')
+            state.append("p2")
 
         consumer = self.consumer(workers=1)
         dt = datetime.datetime(2000, 1, 1, 0, 0)
         self.schedule_tasks(consumer, dt)
         self.assertEqual(len(self.huey), 2)
         self.work_on_tasks(consumer, 2)
-        self.assertEqual(state, ['p1', 'p2'])
+        self.assertEqual(state, ["p1", "p2"])
 
         dt = datetime.datetime(2000, 1, 1, 12, 0)
         self.schedule_tasks(consumer, dt)
         self.assertEqual(len(self.huey), 1)
         self.work_on_tasks(consumer, 1)
-        self.assertEqual(state, ['p1', 'p2', 'p1'])
+        self.assertEqual(state, ["p1", "p2", "p1"])
 
         task_p1.revoke()
         self.schedule_tasks(consumer, dt)
         self.assertEqual(len(self.huey), 1)  # Enqueued despite being revoked.
         self.work_on_tasks(consumer, 1)
-        self.assertEqual(state, ['p1', 'p2', 'p1'])  # No change, not executed.
+        self.assertEqual(state, ["p1", "p2", "p1"])  # No change, not executed.
 
 
 class TestConsumerConfig(BaseTestCase):
@@ -119,21 +120,28 @@ class TestConsumerConfig(BaseTestCase):
         cfg.validate()
         consumer = self.huey.create_consumer(**cfg.values)
         self.assertEqual(consumer.workers, 1)
-        self.assertEqual(consumer.worker_type, 'thread')
+        self.assertEqual(consumer.worker_type, "thread")
         self.assertTrue(consumer.periodic)
         self.assertEqual(consumer.default_delay, 0.1)
         self.assertEqual(consumer.scheduler_interval, 1)
         self.assertTrue(consumer._health_check)
 
     def test_consumer_config(self):
-        cfg = ConsumerConfig(workers=3, worker_type='process', initial_delay=1,
-                             backoff=2, max_delay=4, check_worker_health=False,
-                             scheduler_interval=30, periodic=False)
+        cfg = ConsumerConfig(
+            workers=3,
+            worker_type="process",
+            initial_delay=1,
+            backoff=2,
+            max_delay=4,
+            check_worker_health=False,
+            scheduler_interval=30,
+            periodic=False,
+        )
         cfg.validate()
         consumer = self.huey.create_consumer(**cfg.values)
 
         self.assertEqual(consumer.workers, 3)
-        self.assertEqual(consumer.worker_type, 'process')
+        self.assertEqual(consumer.worker_type, "process")
         self.assertFalse(consumer.periodic)
         self.assertEqual(consumer.default_delay, 1)
         self.assertEqual(consumer.backoff, 2)

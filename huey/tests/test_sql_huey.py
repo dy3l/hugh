@@ -16,12 +16,12 @@ from huey.tests.base import BaseTestCase
 from huey.tests.test_storage import StorageTests
 
 
-SQLHUEY_URL = os.environ.get('SQLHUEY_URL') or 'sqlite:////tmp/huey-sqlite.db'
+SQLHUEY_URL = os.environ.get("SQLHUEY_URL") or "sqlite:////tmp/huey-sqlite.db"
 
 
-@unittest.skipIf(peewee is None, 'requires peewee')
+@unittest.skipIf(peewee is None, "requires peewee")
 class TestSqlStorage(StorageTests, BaseTestCase):
-    db_file = '/tmp/huey-sqlite.db'
+    db_file = "/tmp/huey-sqlite.db"
 
     def setUp(self):
         if os.path.exists(self.db_file):

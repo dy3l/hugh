@@ -16,9 +16,9 @@ class TestPriority(BaseTestCase):
             self.state.append(n)
             return n
 
-        self.task_1 = self.huey.task(priority=1, name='task_1')(task)
-        self.task_2 = self.huey.task(priority=2, name='task_2')(task)
-        self.task_0 = self.huey.task(name='task_0')(task)
+        self.task_1 = self.huey.task(priority=1, name="task_1")(task)
+        self.task_2 = self.huey.task(priority=2, name="task_2")(task)
+        self.task_0 = self.huey.task(name="task_0")(task)
 
     def tearDown(self):
         super(TestPriority, self).tearDown()
@@ -89,7 +89,8 @@ class TestPriority(BaseTestCase):
             r2_0.id: 2,
             r0_1.id: 2,
             r1_1.id: 0,
-            r2_1.id: 1}
+            r2_1.id: 1,
+        }
 
         for _ in range(6):
             self.assertTrue(self.execute_next() is None)
@@ -104,7 +105,7 @@ class TestPriority(BaseTestCase):
         self.assertEqual(priorities, expected)
 
     def test_periodic_priority(self):
-        @self.huey.periodic_task(crontab(), priority=3, name='ptask')
+        @self.huey.periodic_task(crontab(), priority=3, name="ptask")
         def task_p():
             pass
 
@@ -119,13 +120,13 @@ class TestPriority(BaseTestCase):
         # queue, and will be executed first.
         self.assertEqual(len(self.huey), 4)
         ptask = self.huey.dequeue()
-        self.assertEqual(ptask.name, 'ptask')  # Verify is our periodic task.
+        self.assertEqual(ptask.name, "ptask")  # Verify is our periodic task.
         self.assertEqual(ptask.priority, 3)  # Priority is preserved.
 
     def test_priority_retry(self):
         @self.huey.task(priority=3, retries=1)
         def task_3(n):
-            raise ValueError('uh-oh')
+            raise ValueError("uh-oh")
 
         self.task_0(0)
         self.task_1(10)

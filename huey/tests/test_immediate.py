@@ -125,17 +125,39 @@ class TestImmediate(BaseTestCase):
         self.assertEqual(result_group(), [1, 2, 3, 4, 5, 6, 7, 8])
 
 
-class NoUseException(Exception): pass
+class NoUseException(Exception):
+    pass
+
+
 class NoUseStorage(BlackHoleStorage):
-    def enqueue(self, data, priority=None): raise NoUseException()
-    def dequeue(self): raise NoUseException()
-    def add_to_schedule(self, data, ts, utc): raise NoUseException()
-    def read_schedule(self, ts): raise NoUseException()
-    def put_data(self, key, value): raise NoUseException()
-    def peek_data(self, key): raise NoUseException()
-    def pop_data(self, key): raise NoUseException()
-    def has_data_for_key(self, key): raise NoUseException()
-    def put_if_empty(self, key, value): raise NoUseException()
+    def enqueue(self, data, priority=None):
+        raise NoUseException()
+
+    def dequeue(self):
+        raise NoUseException()
+
+    def add_to_schedule(self, data, ts, utc):
+        raise NoUseException()
+
+    def read_schedule(self, ts):
+        raise NoUseException()
+
+    def put_data(self, key, value):
+        raise NoUseException()
+
+    def peek_data(self, key):
+        raise NoUseException()
+
+    def pop_data(self, key):
+        raise NoUseException()
+
+    def has_data_for_key(self, key):
+        raise NoUseException()
+
+    def put_if_empty(self, key, value):
+        raise NoUseException()
+
+
 class NoUseHuey(Huey):
     def get_storage(self, **storage_kwargs):
         return NoUseStorage()

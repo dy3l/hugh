@@ -9,13 +9,14 @@ from huey.exceptions import TaskException
 
 
 class NullHandler(logging.Handler):
-    def emit(self, record): pass
+    def emit(self, record):
+        pass
 
 
-logger = logging.getLogger('huey')
+logger = logging.getLogger("huey")
 logger.addHandler(NullHandler())
 
-TRAVIS = bool(os.environ.get('HUEY_TRAVIS'))
+TRAVIS = bool(os.environ.get("HUEY_TRAVIS"))
 
 
 class BaseTestCase(unittest.TestCase):
@@ -38,13 +39,13 @@ class BaseTestCase(unittest.TestCase):
             fn()
         except exc_type as exc_val:
             return exc_val
-        raise AssertionError('trap_exception() failed to catch %s' % exc_type)
+        raise AssertionError("trap_exception() failed to catch %s" % exc_type)
 
     def consumer(self, **params):
-        params.setdefault('initial_delay', 0.001)
-        params.setdefault('max_delay', 0.001)
-        params.setdefault('workers', 2)
-        params.setdefault('check_worker_health', False)
+        params.setdefault("initial_delay", 0.001)
+        params.setdefault("max_delay", 0.001)
+        params.setdefault("workers", 2)
+        params.setdefault("check_worker_health", False)
         return self.consumer_class(self.huey, **params)
 
     @contextlib.contextmanager

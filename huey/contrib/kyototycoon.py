@@ -13,13 +13,24 @@ from huey.utils import decode
 class KyotoTycoonStorage(BaseStorage):
     priority = True
 
-    def __init__(self, name='huey', host='127.0.0.1', port=1978, db=None,
-                 timeout=None, max_age=3600, queue_db=None, client=None,
-                 blocking=False, result_expire_time=None):
+    def __init__(
+        self,
+        name="huey",
+        host="127.0.0.1",
+        port=1978,
+        db=None,
+        timeout=None,
+        max_age=3600,
+        queue_db=None,
+        client=None,
+        blocking=False,
+        result_expire_time=None,
+    ):
         super(KyotoTycoonStorage, self).__init__(name)
         if client is None:
-            client = KyotoTycoon(host, port, timeout, db, serializer=KT_NONE,
-                                 max_age=max_age)
+            client = KyotoTycoon(
+                host, port, timeout, db, serializer=KT_NONE, max_age=max_age
+            )
 
         self.blocking = blocking
         self.expire_time = result_expire_time
@@ -28,8 +39,8 @@ class KyotoTycoonStorage(BaseStorage):
         self._db = db
         self._queue_db = queue_db if queue_db is not None else db
 
-        self.qname = self.name + '.q'
-        self.sname = self.name + '.s'
+        self.qname = self.name + ".q"
+        self.sname = self.name + ".s"
 
         self.q = self.kt.Queue(self.qname, self._queue_db)
         self.s = self.kt.Schedule(self.sname, self._queue_db)
@@ -71,7 +82,7 @@ class KyotoTycoonStorage(BaseStorage):
         return self.s.clear()
 
     def prefix_key(self, key):
-        return '%s.%s' % (self.qname, decode(key))
+        return "%s.%s" % (self.qname, decode(key))
 
     def put_data(self, key, value, is_result=False):
         xt = self.expire_time if is_result else None
@@ -98,10 +109,10 @@ class KyotoTycoonStorage(BaseStorage):
         return self.kt.add(self.prefix_key(key), value, self._db)
 
     def result_store_size(self):
-        return len(self.kt.match_prefix(self.prefix_key(''), db=self._db))
+        return len(self.kt.match_prefix(self.prefix_key(""), db=self._db))
 
     def result_items(self):
-        prefix = self.prefix_key('')
+        prefix = self.prefix_key("")
         keys = self.kt.match_prefix(prefix, db=self._db)
         result = self.kt.get_bulk(keys, self._db)
 
@@ -109,7 +120,7 @@ class KyotoTycoonStorage(BaseStorage):
         return {key[plen:]: value for key, value in result.items()}
 
     def flush_results(self):
-        prefix = self.prefix_key('')
+        prefix = self.prefix_key("")
         keys = self.kt.match_prefix(prefix, db=self._db)
         return self.kt.remove_bulk(keys, self._db)
 

@@ -41,61 +41,64 @@ HUEY = RedisHuey('my-app')
 """
 
 
-default_backend_path = 'huey.RedisHuey'
+default_backend_path = "huey.RedisHuey"
+
 
 def default_queue_name():
     try:
         return settings.DATABASE_NAME
     except AttributeError:
         try:
-            return str(settings.DATABASES['default']['NAME'])
+            return str(settings.DATABASES["default"]["NAME"])
         except KeyError:
-            return 'huey'
+            return "huey"
 
 
 def get_backend(import_path=default_backend_path):
-    module_path, class_name = import_path.rsplit('.', 1)
+    module_path, class_name = import_path.rsplit(".", 1)
     module = import_module(module_path)
     return getattr(module, class_name)
 
 
 def config_error(msg):
     print(configuration_message)
-    print('\n\n')
+    print("\n\n")
     print(msg)
     sys.exit(1)
 
 
-HUEY = getattr(settings, 'HUEY', None)
+HUEY = getattr(settings, "HUEY", None)
 if HUEY is None:
     try:
         RedisHuey = get_backend(default_backend_path)
     except ImportError:
-        config_error('Error: Huey could not import the redis backend. '
-                     'Install `redis-py`.')
+        config_error(
+            "Error: Huey could not import the redis backend. " "Install `redis-py`."
+        )
     else:
         HUEY = RedisHuey(default_queue_name())
 
 if isinstance(HUEY, dict):
     huey_config = HUEY.copy()  # Operate on a copy.
-    name = huey_config.pop('name', default_queue_name())
-    if 'backend_class' in huey_config:
-        huey_config['huey_class'] = huey_config.pop('backend_class')
-    backend_path = huey_config.pop('huey_class', default_backend_path)
-    conn_kwargs = huey_config.pop('connection', {})
+    name = huey_config.pop("name", default_queue_name())
+    if "backend_class" in huey_config:
+        huey_config["huey_class"] = huey_config.pop("backend_class")
+    backend_path = huey_config.pop("huey_class", default_backend_path)
+    conn_kwargs = huey_config.pop("connection", {})
     try:
-        del huey_config['consumer']  # Don't need consumer opts here.
+        del huey_config["consumer"]  # Don't need consumer opts here.
     except KeyError:
         pass
-    if 'immediate' not in huey_config:
-        huey_config['immediate'] = settings.DEBUG
+    if "immediate" not in huey_config:
+        huey_config["immediate"] = settings.DEBUG
     huey_config.update(conn_kwargs)
 
     try:
         backend_cls = get_backend(backend_path)
     except (ValueError, ImportError, AttributeError):
-        config_error('Error: could not import Huey backend:\n%s'
-                     % traceback.format_exc())
+        config_error(
+            "Error: could not import Huey backend:\n%s" % traceback.format_exc()
+        )
 
     HUEY = backend_cls(name, **huey_config)
 
@@ -127,6 +130,7 @@ disconnect_signal = HUEY.disconnect_signal
 
 def close_db(fn):
     """Decorator to be used with tasks that may operate on the database."""
+
     @wraps(fn)
     def inner(*args, **kwargs):
         if not HUEY.immediate:
@@ -136,6 +140,7 @@ def close_db(fn):
         finally:
             if not HUEY.immediate:
                 close_old_connections()
+
     return inner
 
 
@@ -144,6 +149,7 @@ def db_task(*args, **kwargs):
         ret = task(*args, **kwargs)(close_db(fn))
         ret.call_local = fn
         return ret
+
     return decorator
 
 
@@ -152,4 +158,5 @@ def db_periodic_task(*args, **kwargs):
         ret = periodic_task(*args, **kwargs)(close_db(fn))
         ret.call_local = fn
         return ret
+
     return decorator
