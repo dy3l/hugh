@@ -54,7 +54,7 @@ else:
         return data and data[0] == 0x1F or data[0] == 0x78
 
 
-class Serializer(object):
+class Serializer:
     def __init__(
         self,
         compression=False,
@@ -111,7 +111,7 @@ def constant_time_compare(s1, s2):
 
 class SignedSerializer(Serializer):
     def __init__(self, secret=None, salt="huey", **kwargs):
-        super(SignedSerializer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not secret or not salt:
             raise ConfigurationError(
                 "The secret and salt parameters are " "required by %r" % type(self)
@@ -139,8 +139,8 @@ class SignedSerializer(Serializer):
         raise ValueError('Signature "%s" mismatch!' % sig)
 
     def _serialize(self, message):
-        data = super(SignedSerializer, self)._serialize(message)
+        data = super()._serialize(message)
         return self._sign(data)
 
     def _deserialize(self, data):
-        return super(SignedSerializer, self)._deserialize(self._unsign(data))
+        return super()._deserialize(self._unsign(data))

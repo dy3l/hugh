@@ -27,7 +27,7 @@ Message = namedtuple(
 Message.__new__.__defaults__ = (None,) * len(Message._fields)
 
 
-class Registry(object):
+class Registry:
     def __init__(self):
         self._registry = {}
         self._periodic_tasks = []

@@ -36,7 +36,7 @@ from huey.utils import text_type
 from huey.utils import to_timestamp
 
 
-class BaseStorage(object):
+class BaseStorage:
     """
     Base storage-layer interface. Subclasses should implement all methods.
     """
@@ -299,7 +299,7 @@ class BlackHoleStorage(BaseStorage):
 
 class MemoryStorage(BaseStorage):
     def __init__(self, *args, **kwargs):
-        super(MemoryStorage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._c = 0  # Counter to ensure FIFO behavior for queue.
         self._queue = []
         self._results = {}
@@ -542,7 +542,7 @@ class RedisExpireStorage(RedisStorage):
     # the Redis server handles deleting our results after the expiration time,
     # this storage layer will not delete the results when they are read.
     def __init__(self, name="huey", expire_time=86400, *args, **kwargs):
-        super(RedisExpireStorage, self).__init__(name, *args, **kwargs)
+        super().__init__(name, *args, **kwargs)
 
         self._expire_time = expire_time
 
@@ -600,7 +600,7 @@ class RedisExpireStorage(RedisStorage):
             self.conn.delete(*keys)
 
 
-class RedisPriorityQueue(object):
+class RedisPriorityQueue:
     priority = True
 
     def enqueue(self, data, priority=None):
@@ -648,9 +648,9 @@ class PriorityRedisExpireStorage(RedisPriorityQueue, RedisExpireStorage):
     pass
 
 
-class _ConnectionState(object):
+class _ConnectionState:
     def __init__(self, **kwargs):
-        super(_ConnectionState, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.reset()
 
     def reset(self):
@@ -676,7 +676,7 @@ class BaseSqlStorage(BaseStorage):
     ddl = []
 
     def __init__(self, *args, **kwargs):
-        super(BaseSqlStorage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._state = _ConnectionLocal()
         self.initialize_schema()
 
@@ -784,7 +784,7 @@ class SqliteStorage(BaseSqlStorage):
                 "primary key", "primary key autoincrement"
             )
 
-        super(SqliteStorage, self).__init__(name)
+        super().__init__(name)
 
     def _create_connection(self):
         conn = sqlite3.connect(
@@ -951,7 +951,7 @@ class FileStorage(BaseStorage):
     MAX_PRIORITY = 0xFFFF
 
     def __init__(self, name, path, levels=2, use_thread_lock=False, **storage_kwargs):
-        super(FileStorage, self).__init__(name, **storage_kwargs)
+        super().__init__(name, **storage_kwargs)
 
         self.path = path
         if os.path.exists(self.path) and not os.path.isdir(self.path):

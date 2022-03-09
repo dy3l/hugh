@@ -36,7 +36,7 @@ def option(name, **options):
     return ("-" + letter, "--" + opt_name, options)
 
 
-class OptionParserHandler(object):
+class OptionParserHandler:
     def get_worker_options(self):
         return (
             # -w, -k, -d, -m, -b, -c, -C, -f
@@ -190,7 +190,7 @@ class ConsumerConfig(namedtuple("_ConsumerConfig", config_keys)):
         config = dict(config_defaults)
         config.update(kwargs)
         args = [config[key] for key in config_keys]
-        return super(ConsumerConfig, cls).__new__(cls, *args)
+        return super().__new__(cls, *args)
 
     def validate(self):
         if self.backoff < 1:

@@ -13,7 +13,7 @@ class TaskLockedException(HueyException):
 class CancelExecution(Exception):
     def __init__(self, retry=None, *args, **kwargs):
         self.retry = retry
-        super(CancelExecution, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class RetryTask(Exception):
@@ -23,7 +23,7 @@ class RetryTask(Exception):
 class TaskException(Exception):
     def __init__(self, metadata=None, *args):
         self.metadata = metadata or {}
-        super(TaskException, self).__init__(*args)
+        super().__init__(*args)
 
     def __unicode__(self):
         return self.metadata.get("error") or "unknown error"

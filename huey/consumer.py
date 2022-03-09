@@ -24,7 +24,7 @@ from huey.exceptions import ConfigurationError
 from huey.utils import time_clock
 
 
-class BaseProcess(object):
+class BaseProcess:
     process_name = "BaseProcess"
 
     def __init__(self, huey):
@@ -86,7 +86,7 @@ class Worker(BaseProcess):
         self.delay = self.default_delay = default_delay
         self.max_delay = max_delay
         self.backoff = backoff
-        super(Worker, self).__init__(huey)
+        super().__init__(huey)
 
     def initialize(self):
         for name, startup_hook in self.huey._startup.items():
@@ -145,7 +145,7 @@ class Scheduler(BaseProcess):
     process_name = "Scheduler"
 
     def __init__(self, huey, interval, periodic):
-        super(Scheduler, self).__init__(huey)
+        super().__init__(huey)
         self.interval = max(min(interval, 60), 1)
 
         self.periodic = periodic
@@ -181,7 +181,7 @@ class Scheduler(BaseProcess):
             self.huey.enqueue(task)
 
 
-class Environment(object):
+class Environment:
     """
     Provide a common interface to the supported concurrent environments.
     """
@@ -245,7 +245,7 @@ WORKER_TO_ENVIRONMENT = {
 }
 
 
-class Consumer(object):
+class Consumer:
     """
     Consumer sets up and coordinates the execution of the workers and scheduler
     and registers signal handlers.

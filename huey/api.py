@@ -44,7 +44,7 @@ logger = logging.getLogger("huey")
 _sentinel = object()
 
 
-class Huey(object):
+class Huey:
     """
     Huey executes tasks by exposing function decorators that cause the function
     call to be enqueued for execution by a separate consumer process.
@@ -707,7 +707,7 @@ class Huey(object):
         )
 
 
-class Task(object):
+class Task:
     default_expires = None
     default_priority = None
     default_retries = 0
@@ -836,7 +836,7 @@ class PeriodicTask(Task):
         return False
 
 
-class TaskWrapper(object):
+class TaskWrapper:
     task_base = Task
 
     def __init__(
@@ -959,7 +959,7 @@ class TaskWrapper(object):
         )
 
 
-class TaskLock(object):
+class TaskLock:
     """
     Utilize the Storage key/value APIs to implement simple locking. For more
     details see :py:meth:`Huey.lock_task`.
@@ -993,7 +993,7 @@ class TaskLock(object):
         return self._huey.delete(self._key)
 
 
-class Result(object):
+class Result:
     """
     Wrapper around task result data. When a task is executed, an instance of
     ``Result`` is returned to provide access to the return value.
@@ -1121,7 +1121,7 @@ class Result(object):
         self._result = EmptyData
 
 
-class ResultGroup(object):
+class ResultGroup:
     def __init__(self, results):
         self._results = results
 

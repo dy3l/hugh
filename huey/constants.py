@@ -4,5 +4,5 @@ WORKER_PROCESS = "process"
 WORKER_TYPES = (WORKER_THREAD, WORKER_GREENLET, WORKER_PROCESS)
 
 
-class EmptyData(object):
+class EmptyData:
     pass

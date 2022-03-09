@@ -1,7 +1,6 @@
 from collections import namedtuple
 import calendar
 import datetime
-import errno
 import os
 import sys
 import time
@@ -143,7 +142,7 @@ def decode(s):
         return text_type(s)
 
 
-class FileLock(object):
+class FileLock:
     def __init__(self, filename):
         if fcntl is None:
             warnings.warn(

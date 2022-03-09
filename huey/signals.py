@@ -13,7 +13,7 @@ SIGNAL_SCHEDULED = "scheduled"
 SIGNAL_INTERRUPTED = "interrupted"
 
 
-class Signal(object):
+class Signal:
     __slots__ = ("receivers",)
 
     def __init__(self):
