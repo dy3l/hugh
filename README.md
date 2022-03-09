@@ -1,11 +1,8 @@
-<div align="center">
-```
+<pre>
  _           _
 | |_ _ _ ___| |_
 |   | | | . |   |
 |_|_|___|_  |_|_|
         |___|
-```
-
-*a feathierweight alternative*
-</div>
+</pre>
+<i>a featherweight alternative</i>
