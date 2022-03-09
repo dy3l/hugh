@@ -2,7 +2,7 @@ import os
 from setuptools import setup, find_packages
 
 
-with open(os.path.join(os.path.dirname(__file__), "README.rst")) as fh:
+with open(os.path.join(os.path.dirname(__file__), "README.md")) as fh:
     readme = fh.read()
 
 extras_require = {
