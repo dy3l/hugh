@@ -33,15 +33,13 @@ class Registry:
         self._periodic_tasks = []
 
     def task_to_string(self, task_class):
-        return "%s.%s" % (task_class.__module__, task_class.__name__)
+        return f"{task_class.__module__}.{task_class.__name__}"
 
     def register(self, task_class):
         task_str = self.task_to_string(task_class)
         if task_str in self._registry:
             raise ValueError(
-                "Attempting to register a task with the same "
-                "identifier as existing task. Specify a different"
-                ' name= to register this task. "%s"' % task_str
+                f"Attempting to register a task with the same identifier as existing task. Specify a different name to register this task. {task_str}"
             )
 
         self._registry[task_str] = task_class
@@ -63,13 +61,13 @@ class Registry:
 
     def string_to_task(self, task_str):
         if task_str not in self._registry:
-            raise HueyException("%s not found in TaskRegistry" % task_str)
+            raise HueyException(f"{task_str} not found in TaskRegistry")
         return self._registry[task_str]
 
     def create_message(self, task):
         task_str = self.task_to_string(type(task))
         if task_str not in self._registry:
-            raise HueyException("%s not found in TaskRegistry" % task_str)
+            raise HueyException(f"{task_str} not found in TaskRegistry")
 
         # Remove the "task" instance from any arguments before serializing.
         if task.kwargs and "task" in task.kwargs:

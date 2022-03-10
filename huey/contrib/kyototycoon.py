@@ -82,7 +82,7 @@ class KyotoTycoonStorage(BaseStorage):
         return self.s.clear()
 
     def prefix_key(self, key):
-        return "%s.%s" % (self.qname, decode(key))
+        return f"{self.qname}.{decode(key)}"
 
     def put_data(self, key, value, is_result=False):
         xt = self.expire_time if is_result else None

@@ -96,7 +96,7 @@ class Huey:
         immediate_use_memory=True,
         always_eager=None,
         storage_class=None,
-        **storage_kwargs
+        **storage_kwargs,
     ):
         if always_eager is not None:
             warnings.warn(
@@ -112,8 +112,7 @@ class Huey:
         ]
         if invalid:
             warnings.warn(
-                "the following Huey initialization arguments are no "
-                "longer supported: %s" % ", ".join(invalid),
+                f"the following Huey initialization arguments are no longer supported: {', '.join(invalid)}",
                 DeprecationWarning,
             )
 
@@ -190,7 +189,7 @@ class Huey:
         context=False,
         name=None,
         expires=None,
-        **kwargs
+        **kwargs,
     ):
         def decorator(func):
             return TaskWrapper(
@@ -202,7 +201,7 @@ class Huey:
                 default_retry_delay=retry_delay,
                 default_priority=priority,
                 default_expires=expires,
-                **kwargs
+                **kwargs,
             )
 
         return decorator
@@ -216,7 +215,7 @@ class Huey:
         context=False,
         name=None,
         expires=None,
-        **kwargs
+        **kwargs,
     ):
         def decorator(func):
             def method_validate(self, timestamp):
@@ -233,7 +232,7 @@ class Huey:
                 default_expires=expires,
                 validate_datetime=method_validate,
                 task_base=PeriodicTask,
-                **kwargs
+                **kwargs,
             )
 
         return decorator
@@ -326,7 +325,7 @@ class Huey:
         try:
             self._signal.send(signal, task, *args, **kwargs)
         except Exception as exc:
-            logger.exception('Error occurred sending signal "%s"', signal)
+            logger.exception(f'Error occurred sending signal "{signal}"')
 
     def serialize_task(self, task):
         message = self._registry.create_message(task)
@@ -399,13 +398,13 @@ class Huey:
         if not self.ready_to_run(task, timestamp):
             self.add_schedule(task)
         elif self.is_revoked(task, timestamp, False):
-            logger.warning("Task %s was revoked, not executing", task)
+            logger.warning(f"Task {task} was revoked, not executing")
             self._emit(S.SIGNAL_REVOKED, task)
         elif task.expires_resolved and task.expires_resolved < timestamp:
-            logger.info("Task %s expired, not executing.", task)
+            logger.info(f"Task {task} expired, not executing.")
             self._emit(S.SIGNAL_EXPIRED, task)
         else:
-            logger.info("Executing %s", task)
+            logger.info(f"Executing {task}")
             self._emit(S.SIGNAL_EXECUTING, task)
             return self._execute(task, timestamp)
 
@@ -429,11 +428,11 @@ class Huey:
                 self._tasks_in_flight.remove(task)
                 duration = time_clock() - start
         except TaskLockedException as exc:
-            logger.warning("Task %s not run, unable to acquire lock.", task.id)
+            logger.warning(f"Task {task.id} not run, unable to acquire lock.")
             exception = exc
             self._emit(S.SIGNAL_LOCKED, task)
         except RetryTask as exc:
-            logger.info("Task %s raised RetryTask, retrying.", task.id)
+            logger.info(f"Task {task.id} raised RetryTask, retrying.")
             task.retries += 1
             exception = exc
         except CancelExecution as exc:
@@ -443,19 +442,19 @@ class Huey:
             else:
                 task.retries = 0
                 msg = "(aborted, will not be retried)"
-            logger.warning("Task %s raised CancelExecution %s.", task.id, msg)
+            logger.warning(f"Task {task.id} raised CancelExecution {msg}.")
             self._emit(S.SIGNAL_CANCELED, task)
             exception = exc
         except KeyboardInterrupt:
-            logger.warning("Received exit signal, %s did not finish.", task.id)
+            logger.warning(f"Received exit signal, {task.id} did not finish.")
             self._emit(S.SIGNAL_INTERRUPTED, task)
             return
         except Exception as exc:
-            logger.exception("Unhandled exception in task %s.", task.id)
+            logger.exception(f"Unhandled exception in task {task.id}.")
             exception = exc
             self._emit(S.SIGNAL_ERROR, task, exc)
         else:
-            logger.info("%s executed in %0.3fs", task, duration)
+            logger.info(f"{task} executed in {duration:0.3f}s")
 
         if self.results and not isinstance(task, PeriodicTask):
             if exception is not None:
@@ -488,7 +487,7 @@ class Huey:
 
     def _requeue_task(self, task, timestamp):
         task.retries -= 1
-        logger.info("Requeueing %s, %s retries", task.id, task.retries)
+        logger.info(f"Requeueing {task.id}, {task.retries} retries")
         if task.retry_delay:
             delay = datetime.timedelta(seconds=task.retry_delay)
             task.eta = timestamp + delay
@@ -498,29 +497,25 @@ class Huey:
 
     def _run_pre_execute(self, task):
         for name, callback in self._pre_execute.items():
-            logger.debug("Pre-execute hook %s for %s.", name, task)
+            logger.debug(f"Pre-execute hook {name} for {task}.")
             try:
                 callback(task)
             except CancelExecution:
-                logger.warning("Task %s cancelled by %s (pre-execute).", task, name)
+                logger.warning(f"Task {task} cancelled by {name} (pre-execute).")
                 raise
             except Exception:
                 logger.exception(
-                    "Unhandled exception calling pre-execute " "hook %s for %s.",
-                    name,
-                    task,
+                    f"Unhandled exception calling pre-execute hook {name} for {task}."
                 )
 
     def _run_post_execute(self, task, task_value, exception):
         for name, callback in self._post_execute.items():
-            logger.debug("Post-execute hook %s for %s.", name, task)
+            logger.debug(f"Post-execute hook {name} for {task}.")
             try:
                 callback(task, task_value, exception)
             except Exception as exc:
                 logger.exception(
-                    "Unhandled exception calling post-execute " "hook %s for %s.",
-                    name,
-                    task,
+                    f"Unhandled exception calling post-execute hook {name} for {task}."
                 )
 
     def build_error_result(self, task, exception):
@@ -613,7 +608,7 @@ class Huey:
         data = self.serialize_task(task)
         eta = task.eta or datetime.datetime.fromtimestamp(0)
         self.storage.add_to_schedule(data, eta, self.utc)
-        logger.info("Added task %s to schedule, eta %s", task.id, eta)
+        logger.info(f"Added task {task.id} to schedule, eta {eta}")
         self._emit(S.SIGNAL_SCHEDULED, task)
 
     def read_schedule(self, timestamp=None):
@@ -676,8 +671,7 @@ class Huey:
         flushed = set()
         locks = self._locks
         if names:
-            lock_template = "%s.lock.%%s" % self.name
-            named_locks = (lock_template % name.strip() for name in names)
+            named_locks = (f"{self.name}.lock.{name.strip()}" for name in names)
             locks = itertools.chain(locks, named_locks)
 
         for lock_key in locks:
@@ -731,7 +725,7 @@ class Task:
         self.args = () if args is None else args
         self.kwargs = {} if kwargs is None else kwargs
         self.id = id or self.create_id()
-        self.revoke_id = "r:%s" % self.id
+        self.revoke_id = f"r:{self.id}"
         self.eta = eta
         self.retries = retries if retries is not None else self.default_retries
         self.retry_delay = (
@@ -749,22 +743,22 @@ class Task:
         return (self.args, self.kwargs)
 
     def __repr__(self):
-        rep = "%s.%s: %s" % (self.__module__, self.name, self.id)
+        rep = f"{self.__module__}.{self.name}: {self.id}"
         if self.eta:
-            rep += " @%s" % self.eta
+            rep += f" @{self.eta}"
         if self.expires:
             if self.expires_resolved and self.expires != self.expires_resolved:
-                rep += " exp=%s (%s)" % (self.expires, self.expires_resolved)
+                rep += f" exp={self.expires} ({self.expires_resolved})"
             else:
-                rep += " exp=%s" % self.expires
+                rep += f" exp={self.expires}"
         if self.priority:
-            rep += " p=%s" % self.priority
+            rep += f" p={self.priority}"
         if self.retries:
-            rep += " %s retries" % self.retries
+            rep += f" {self.retries} retries"
         if self.on_complete:
-            rep += " -> %s" % self.on_complete
+            rep += f" -> {self.on_complete}"
         if self.on_error:
-            rep += ", on error %s" % self.on_error
+            rep += f", on error {self.on_error}"
         return rep
 
     def __hash__(self):
@@ -848,7 +842,7 @@ class TaskWrapper:
         context=False,
         name=None,
         task_base=None,
-        **settings
+        **settings,
     ):
         self.__doc__ = getattr(func, "__doc__", None)
         self.huey = huey
@@ -968,7 +962,7 @@ class TaskLock:
     def __init__(self, huey, name):
         self._huey = huey
         self._name = name
-        self._key = "%s.lock.%s" % (self._huey.name, self._name)
+        self._key = f"{self._huey.name}.lock.{self._name}"
         self._huey._locks.add(self._key)
 
     def is_locked(self):
@@ -984,7 +978,7 @@ class TaskLock:
 
     def __enter__(self):
         if not self._huey.put_if_empty(self._key, "1"):
-            raise TaskLockedException("unable to set lock: %s" % self._name)
+            raise TaskLockedException(f"unable to set lock: {self._name}")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._huey.delete(self._key)
@@ -1023,7 +1017,7 @@ class Result:
         self._result = EmptyData
 
     def __repr__(self):
-        return "<Result: task %s>" % self.id
+        return f"<Result: task {self.id}>"
 
     @property
     def id(self):
@@ -1185,7 +1179,7 @@ def crontab(minute="*", hour="*", day="*", month="*", day_of_week="*", strict=Fa
             if piece.isdigit():
                 piece = int(piece)
                 if piece not in acceptable:
-                    raise ValueError("%d is not a valid input" % piece)
+                    raise ValueError(f"{piece} is not a valid input")
                 elif date_str == "w":
                     piece %= 7
                 settings.add(piece)
@@ -1195,7 +1189,7 @@ def crontab(minute="*", hour="*", day="*", month="*", day_of_week="*", strict=Fa
             if dash_match:
                 lhs, rhs = map(int, dash_match.groups())
                 if lhs not in acceptable or rhs not in acceptable:
-                    raise ValueError("%s is not a valid input" % piece)
+                    raise ValueError(f"{piece} is not a valid input")
                 elif date_str == "w":
                     lhs %= 7
                     rhs %= 7
@@ -1207,7 +1201,7 @@ def crontab(minute="*", hour="*", day="*", month="*", day_of_week="*", strict=Fa
             if every_match:
                 if date_str == "w":
                     raise ValueError(
-                        "Cannot perform this kind of matching" " on day-of-week."
+                        "Cannot perform this kind of matching on day-of-week."
                     )
                 interval = int(every_match.groups()[0])
                 settings.update(acceptable[::interval])
@@ -1215,7 +1209,7 @@ def crontab(minute="*", hour="*", day="*", month="*", day_of_week="*", strict=Fa
 
             # Older versions of Huey would, at this point, ignore the unmatched piece.
             if strict:
-                raise ValueError("%s is not a valid input" % piece)
+                raise ValueError(f"{piece} is not a valid input")
 
         cron_settings.append(sorted(list(settings)))
 
@@ -1238,7 +1232,7 @@ def _unsupported(name, library):
     class UnsupportedHuey(Huey):
         def __init__(self, *args, **kwargs):
             raise ConfigurationError(
-                'Cannot initialize "%s", %s module not ' "installed." % (name, library)
+                f'Cannot initialize "{name}", {library} module not installed.'
             )
 
     return UnsupportedHuey

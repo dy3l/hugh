@@ -84,7 +84,7 @@ class MiniHuey(object):
         self._run_t = None
 
     def _enqueue(self, fn, args=None, kwargs=None, async_result=None):
-        logger.info("enqueueing %s" % fn.__name__)
+        logger.info(f"enqueueing {fn.__name__}")
         self._pool.spawn(self._execute, fn, args, kwargs, async_result)
 
     def _execute(self, fn, args, kwargs, async_result):
@@ -94,7 +94,7 @@ class MiniHuey(object):
         try:
             ret = fn(*args, **kwargs)
         except Exception as exc:
-            logger.exception("task %s failed" % fn.__name__)
+            logger.exception(f"task {fn.__name__} failed")
             async_result.set_exception(exc)
             raise
         else:
@@ -102,7 +102,7 @@ class MiniHuey(object):
 
         if async_result is not None:
             async_result.set(ret)
-        logger.info("executed %s in %0.3fs", fn.__name__, duration)
+        logger.info(f"executed {fn.__name__} in {duration:0.3f}s")
 
     def _run(self):
         logger.info("task runner started.")

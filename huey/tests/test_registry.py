@@ -108,7 +108,7 @@ class TestRegistry(BaseTestCase):
         tc = task_a.task_class
         old_message = (
             t.id,
-            "%s.%s" % (tc.__module__, tc.__name__),
+            f"{tc.__module__}.{tc.__name__}",
             None,
             0,
             0,

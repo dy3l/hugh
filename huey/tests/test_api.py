@@ -23,7 +23,7 @@ class TestError(Exception):
         self._m = m
 
     def __repr__(self):
-        return "TestError(%s)" % self._m
+        return f"TestError({self._m})"
 
 
 class ExcCounter(Exception):
@@ -34,7 +34,7 @@ class ExcCounter(Exception):
         self._v = ExcCounter.counter
 
     def __repr__(self):
-        return "ExcCounter(%s)" % self._v
+        return f"ExcCounter({self._v})"
 
 
 class TestQueue(BaseTestCase):
@@ -1045,8 +1045,8 @@ class TestDecorators(BaseTestCase):
 
         @self.huey.task()
         def make_ptask(every_n):
-            name = "ptask_%s" % every_n
-            sched = crontab("*/%s" % every_n)
+            name = f"ptask_{every_n}"
+            sched = crontab(f"*/{every_n}")
             self.huey.periodic_task(sched, name=name)(ptask)
 
         # Create two tasks dynamically.
@@ -1415,8 +1415,8 @@ class TestHueyAPIs(BaseTestCase):
         self.assertEqual(self.huey.flush_locks(), set())
 
     def test_flush_named_locks(self):
-        self.huey.put_if_empty("%s.lock.lock1" % self.huey.name, "1")
-        self.huey.put_if_empty("%s.lock.lock2" % self.huey.name, "1")
+        self.huey.put_if_empty(f"{self.huey.name}.lock.lock1", "1")
+        self.huey.put_if_empty(f"{self.huey.name}.lock.lock2", "1")
         with self.huey.lock_task("lock3"):
             flushed = self.huey.flush_locks("lock1", "lock2", "lockx")
 

@@ -11,7 +11,7 @@ from huey.utils import load_class
 
 
 def err(s):
-    sys.stderr.write("\033[91m%s\033[0m\n" % s)
+    sys.stderr.write(f"\033[91m{s}\033[0m\n")
 
 
 def load_huey(path):
@@ -22,7 +22,7 @@ def load_huey(path):
         if cur_dir not in sys.path:
             sys.path.insert(0, cur_dir)
             return load_huey(path)
-        err("Error importing %s" % path)
+        err(f"Error importing {path}")
         raise
 
 

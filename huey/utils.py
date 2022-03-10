@@ -43,7 +43,7 @@ def load_class(s):
 
 def reraise_as(new_exc_class):
     exc_class, exc, tb = sys.exc_info()
-    raise new_exc_class("%s: %s" % (exc_class.__name__, exc))
+    raise new_exc_class(f"{exc_class.__name__}: {exc}")
 
 
 def is_naive(dt):

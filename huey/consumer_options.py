@@ -84,7 +84,7 @@ class OptionParserHandler:
                 dest="health_check_interval",
                 metavar="SECONDS",
                 help=(
-                    "minimum time to wait between worker health checks " "(default=1.0)"
+                    "minimum time to wait between worker health checks (default=1.0)"
                 ),
             ),
             option(
@@ -146,9 +146,7 @@ class OptionParserHandler:
         )
 
     def get_option_parser(self):
-        parser = optparse.OptionParser(
-            "Usage: %prog [options] " "path.to.huey_instance"
-        )
+        parser = optparse.OptionParser("Usage: %prog [options] path.to.huey_instance")
 
         def add_group(name, description, options):
             group = parser.add_option_group(name, description)

@@ -73,7 +73,7 @@ if HUEY is None:
         RedisHuey = get_backend(default_backend_path)
     except ImportError:
         config_error(
-            "Error: Huey could not import the redis backend. " "Install `redis-py`."
+            "Error: Huey could not import the redis backend. Install `redis-py`."
         )
     else:
         HUEY = RedisHuey(default_queue_name())
@@ -96,9 +96,7 @@ if isinstance(HUEY, dict):
     try:
         backend_cls = get_backend(backend_path)
     except (ValueError, ImportError, AttributeError):
-        config_error(
-            "Error: could not import Huey backend:\n%s" % traceback.format_exc()
-        )
+        config_error(f"Error: could not import Huey backend:\n{traceback.format_exc()}")
 
     HUEY = backend_cls(name, **huey_config)
 

@@ -69,12 +69,10 @@ class Serializer:
         if self.comp:
             if self.use_zlib and zlib is None:
                 raise ConfigurationError(
-                    "use_zlib specified, but zlib module " "not found."
+                    "use_zlib specified, but zlib module not found."
                 )
             elif gzip is None:
-                raise ConfigurationError(
-                    "gzip module required to enable " "compression."
-                )
+                raise ConfigurationError("gzip module required to enable compression.")
 
     def _serialize(self, data):
         return pickle.dumps(data, self.pickle_protocol)
@@ -114,7 +112,7 @@ class SignedSerializer(Serializer):
         super().__init__(**kwargs)
         if not secret or not salt:
             raise ConfigurationError(
-                "The secret and salt parameters are " "required by %r" % type(self)
+                f"The secret and salt parameters are required by {type(self)}"
             )
         self.secret = encode(secret)
         self.salt = encode(salt)
@@ -130,13 +128,13 @@ class SignedSerializer(Serializer):
 
     def _unsign(self, signed):
         if self.separator not in signed:
-            raise ValueError('Separator "%s" not found' % self.separator)
+            raise ValueError(f'Separator "{self.separator}" not found')
 
         msg, sig = signed.rsplit(self.separator, 1)
         if constant_time_compare(sig, self._signature(msg)):
             return msg
 
-        raise ValueError('Signature "%s" mismatch!' % sig)
+        raise ValueError(f'Signature "{sig}" mismatch!')
 
     def _serialize(self, message):
         data = super()._serialize(message)

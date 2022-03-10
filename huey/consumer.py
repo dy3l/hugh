@@ -32,7 +32,7 @@ class BaseProcess:
         self._logger = self.create_logger()
 
     def create_logger(self):
-        return logging.getLogger("huey.consumer.%s" % self.process_name)
+        return logging.getLogger(f"huey.consumer.{self.process_name}")
 
     def initialize(self):
         pass
@@ -49,7 +49,7 @@ class BaseProcess:
         sleep_time = nseconds - (time_clock() - start_ts)
         if sleep_time <= 0:
             return
-        self._logger.debug("Sleeping for %s", sleep_time)
+        self._logger.debug(f"Sleeping for {sleep_time}")
         # Recompute time to sleep to improve accuracy in case the process was
         # pre-empted by the kernel while logging.
         sleep_time = nseconds - (time_clock() - start_ts)
@@ -90,19 +90,19 @@ class Worker(BaseProcess):
 
     def initialize(self):
         for name, startup_hook in self.huey._startup.items():
-            self._logger.debug('calling startup hook "%s"', name)
+            self._logger.debug(f'calling startup hook "{name}"')
             try:
                 startup_hook()
             except Exception as exc:
-                self._logger.exception('startup hook "%s" failed', name)
+                self._logger.exception(f'startup hook "{name}" failed')
 
     def shutdown(self):
         for name, shutdown_hook in self.huey._shutdown.items():
-            self._logger.debug('calling shutdown hook "%s"', name)
+            self._logger.debug(f'calling shutdown hook "{name}"')
             try:
                 shutdown_hook()
             except Exception as exc:
-                self._logger.exception('shutdown hook "%s" failed', name)
+                self._logger.exception(f'shutdown hook "{name}" failed')
 
     def loop(self, now=None):
         task = None
@@ -118,7 +118,7 @@ class Worker(BaseProcess):
                     self.huey.execute(task, now)
                 except Exception as exc:
                     self._logger.exception(
-                        "Unhandled error during execution " "of task %s.", task.id
+                        f"Unhandled error during execution of task {task.id}."
                     )
             elif not self.huey.storage.blocking:
                 self.sleep()
@@ -165,7 +165,7 @@ class Scheduler(BaseProcess):
             self._logger.exception("Error reading schedule.")
         else:
             for task in task_list:
-                self._logger.debug("Enqueueing %s", task)
+                self._logger.debug(f"Enqueueing {task}")
                 self.huey.enqueue(task)
 
         if self.periodic and self._next_periodic <= time_clock():
@@ -177,7 +177,7 @@ class Scheduler(BaseProcess):
     def enqueue_periodic_tasks(self, now):
         self._logger.debug("Checking periodic tasks")
         for task in self.huey.read_periodic(now):
-            self._logger.info("Enqueueing periodic task %s.", task)
+            self._logger.info(f"Enqueueing periodic task {task}.")
             self.huey.enqueue(task)
 
 
@@ -329,7 +329,7 @@ class Consumer:
         self.worker_threads = []
         for i in range(workers):
             worker = self._create_worker()
-            process = self._create_process(worker, "Worker-%d" % (i + 1))
+            process = self._create_process(worker, f"Worker-{i + 1}")
 
             # The worker threads are stored as [(worker impl, worker_t), ...].
             # The worker impl is not currently referenced in any consumer code,
@@ -341,12 +341,12 @@ class Consumer:
         flushed = self.huey.flush_locks(*names)
         if flushed:
             self._logger.warning(
-                "Found stale locks: %s" % (", ".join(key for key in flushed))
+                f"Found stale locks: {', '.join(key for key in flushed)}"
             )
 
     def get_environment(self, worker_type):
         if worker_type not in WORKER_TO_ENVIRONMENT:
-            raise ValueError("worker_type must be one of %s." % ", ".join(WORKER_TYPES))
+            raise ValueError(f"worker_type must be one of {', '.join(WORKER_TYPES)}.")
         return WORKER_TO_ENVIRONMENT[worker_type]()
 
     def _create_worker(self):
@@ -379,7 +379,7 @@ class Consumer:
             except KeyboardInterrupt:
                 pass
             except:
-                self._logger.exception("Process %s died!", name)
+                self._logger.exception(f"Process {name} died!")
             finally:
                 process.shutdown()
 
@@ -398,20 +398,16 @@ class Consumer:
 
         # Log startup message.
         self._logger.info(
-            "Huey consumer started with %s %s, PID %s at %s",
-            self.workers,
-            self.worker_type,
-            os.getpid(),
-            self.huey._get_timestamp(),
+            f"Huey consumer started with {self.workers} {self.worker_type}, PID {os.getpid()} at {self.huey._get_timestamp()}"
         )
-        self._logger.info("Scheduler runs every %s second(s).", self.scheduler_interval)
+        self._logger.info(f"Scheduler runs every {self.scheduler_interval} second(s).")
         self._logger.info(
-            "Periodic tasks are %s.", "enabled" if self.periodic else "disabled"
+            f"Periodic tasks are {'enabled' if self.periodic else 'disabled'}."
         )
 
         msg = ["The following commands are available:"]
         for command in self.huey._registry._registry:
-            msg.append("+ %s" % command)
+            msg.append(f"+ {command}")
 
         self._logger.info("\n".join(msg))
 
@@ -493,9 +489,9 @@ class Consumer:
         restart_occurred = False
         for i, (worker, worker_t) in enumerate(self.worker_threads):
             if not self.environment.is_alive(worker_t):
-                self._logger.warning("Worker %d died, restarting.", i + 1)
+                self._logger.warning(f"Worker {i + 1} died, restarting.")
                 worker = self._create_worker()
-                worker_t = self._create_process(worker, "Worker-%d" % (i + 1))
+                worker_t = self._create_process(worker, f"Worker-{i + 1}")
                 worker_t.start()
                 restart_occurred = True
             workers.append((worker, worker_t))

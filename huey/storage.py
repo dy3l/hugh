@@ -405,7 +405,7 @@ class RedisStorage(BaseStorage):
         connection_pool=None,
         url=None,
         client_name=None,
-        **connection_params
+        **connection_params,
     ):
 
         if Redis is None:
@@ -438,10 +438,10 @@ class RedisStorage(BaseStorage):
         self._pop = self.conn.register_script(SCHEDULE_POP_LUA)
 
         self.name = self.clean_name(name)
-        self.queue_key = "huey.redis.%s" % self.name
-        self.schedule_key = "huey.schedule.%s" % self.name
-        self.result_key = "huey.results.%s" % self.name
-        self.error_key = "huey.errors.%s" % self.name
+        self.queue_key = f"huey.redis.{self.name}"
+        self.schedule_key = f"huey.schedule.{self.name}"
+        self.result_key = f"huey.results.{self.name}"
+        self.error_key = f"huey.errors.{self.name}"
 
         if client_name is not None:
             self.conn.client_setname(client_name)
@@ -458,7 +458,7 @@ class RedisStorage(BaseStorage):
     def enqueue(self, data, priority=None):
         if priority:
             raise NotImplementedError(
-                "Task priorities are not supported by " "this storage."
+                "Task priorities are not supported by this storage."
             )
         self.conn.lpush(self.queue_key, data)
 
@@ -751,7 +751,7 @@ class SqliteStorage(BaseSqlStorage):
         "data blob not null, priority real not null default 0.0)"
     )
     index_task = (
-        "create index if not exists task_priority_id on task " "(priority desc, id asc)"
+        "create index if not exists task_priority_id on task (priority desc, id asc)"
     )
     ddl = [table_kv, table_sched, index_sched, table_task, index_task]
 
@@ -764,7 +764,7 @@ class SqliteStorage(BaseSqlStorage):
         journal_mode="wal",
         timeout=5,
         strict_fifo=False,
-        **kwargs
+        **kwargs,
     ):
         self.filename = filename
         self._cache_mb = cache_mb
@@ -791,10 +791,10 @@ class SqliteStorage(BaseSqlStorage):
             self.filename, timeout=self._timeout, **self._conn_kwargs
         )
         conn.isolation_level = None  # Autocommit mode.
-        conn.execute('pragma journal_mode="%s"' % self._journal_mode)
+        conn.execute(f'pragma journal_mode="{self._journal_mode}"')
         if self._cache_mb:
-            conn.execute("pragma cache_size=%s" % (-1000 * self._cache_mb))
-        conn.execute("pragma synchronous=%s" % (2 if self._fsync else 0))
+            conn.execute(f"pragma cache_size={-1000 * self._cache_mb}")
+        conn.execute(f"pragma synchronous={2 if self._fsync else 0}")
         return conn
 
     def enqueue(self, data, priority=None):
@@ -838,7 +838,7 @@ class SqliteStorage(BaseSqlStorage):
     def add_to_schedule(self, data, ts, utc):
         params = (self.name, to_blob(data), to_timestamp(ts))
         self.sql(
-            "insert into schedule (queue, data, timestamp) " "values (?, ?, ?)",
+            "insert into schedule (queue, data, timestamp) values (?, ?, ?)",
             params,
             commit=True,
         )
@@ -847,7 +847,7 @@ class SqliteStorage(BaseSqlStorage):
         with self.db(commit=True) as curs:
             params = (self.name, to_timestamp(ts))
             curs.execute(
-                "select id, data from schedule where " "queue = ? and timestamp <= ?",
+                "select id, data from schedule where queue = ? and timestamp <= ?",
                 params,
             )
             id_list, data = [], []
@@ -856,7 +856,7 @@ class SqliteStorage(BaseSqlStorage):
                 data.append(to_bytes(task_data))
             if id_list:
                 plist = ",".join("?" * len(id_list))
-                curs.execute("delete from schedule where id IN (%s)" % plist, id_list)
+                curs.execute(f"delete from schedule where id IN ({plist})", id_list)
             return data
 
     def schedule_size(self):
@@ -878,7 +878,7 @@ class SqliteStorage(BaseSqlStorage):
 
     def put_data(self, key, value, is_result=False):
         self.sql(
-            "insert or replace into kv (queue, key, value) " "values (?, ?, ?)",
+            "insert or replace into kv (queue, key, value) values (?, ?, ?)",
             (self.name, key, to_blob(value)),
             True,
         )
@@ -916,7 +916,7 @@ class SqliteStorage(BaseSqlStorage):
         try:
             with self.db(commit=True) as curs:
                 curs.execute(
-                    "insert or abort into kv " "(queue, key, value) values (?, ?, ?)",
+                    "insert or abort into kv (queue, key, value) values (?, ?, ?)",
                     (self.name, key, to_blob(value)),
                 )
         except sqlite3.IntegrityError:
@@ -955,9 +955,9 @@ class FileStorage(BaseStorage):
 
         self.path = path
         if os.path.exists(self.path) and not os.path.isdir(self.path):
-            raise ValueError('path "%s" is not a directory' % path)
+            raise ValueError(f'path "{path}" is not a directory')
         if levels < 0 or levels > 4:
-            raise ValueError("%s levels must be between 0 and 4" % self)
+            raise ValueError(f"{self} levels must be between 0 and 4")
 
         self.queue_path = os.path.join(self.path, "queue")
         self.schedule_path = os.path.join(self.path, "schedule")
@@ -980,7 +980,7 @@ class FileStorage(BaseStorage):
         if priority < 0:
             raise ValueError("priority must be a positive number")
         if priority > self.MAX_PRIORITY:
-            raise ValueError("priority must be <= %s" % self.MAX_PRIORITY)
+            raise ValueError(f"priority must be <= {self.MAX_PRIORITY}")
 
         with self.lock:
             if not os.path.exists(self.queue_path):
@@ -988,16 +988,15 @@ class FileStorage(BaseStorage):
 
             # Encode the filename so that tasks are sorted by priority (desc) and
             # timestamp (asc).
-            prefix = "%04x-%012x" % (
-                self.MAX_PRIORITY - priority,
-                int(time.time() * 1000),
+            prefix = (
+                f"{self.MAX_PRIORITY - priority:04x}-{int(time.time() * 1000):012x}"
             )
 
             base = filename = os.path.join(self.queue_path, prefix)
             conflict = 0
             while os.path.exists(filename):
                 conflict += 1
-                filename = "%s.%03d" % (base, conflict)
+                filename = f"{base}.{conflict:03d}"
 
             with open(filename, "wb") as fh:
                 fh.write(data)
@@ -1038,7 +1037,7 @@ class FileStorage(BaseStorage):
 
     def _timestamp_to_prefix(self, ts):
         ts = time.mktime(ts.timetuple()) + (ts.microsecond * 1e-6)
-        return "%012x" % int(ts * 1000)
+        return f"{int(ts * 1000):012x}"
 
     def add_to_schedule(self, data, ts, utc):
         with self.lock:
@@ -1050,7 +1049,7 @@ class FileStorage(BaseStorage):
             conflict = 0
             while os.path.exists(filename):
                 conflict += 1
-                filename = "%s.%03d" % (base, conflict)
+                filename = f"{base}.{conflict:03d}"
 
             with open(filename, "wb") as fh:
                 fh.write(data)
