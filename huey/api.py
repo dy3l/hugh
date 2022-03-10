@@ -9,7 +9,6 @@ import uuid
 import warnings
 
 from collections import OrderedDict
-from functools import partial
 from functools import wraps
 
 from huey import signals as S
@@ -34,7 +33,6 @@ from huey.storage import SqliteStorage
 from huey.utils import Error
 from huey.utils import normalize_expire_time
 from huey.utils import normalize_time
-from huey.utils import reraise_as
 
 
 logger = logging.getLogger("huey")

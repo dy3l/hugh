@@ -12,9 +12,6 @@ from gevent.event import AsyncResult
 from gevent.event import Event
 from gevent.pool import Pool
 
-from huey.api import crontab
-
-
 logger = logging.getLogger("huey.mini")
 
 

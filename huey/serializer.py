@@ -4,7 +4,6 @@ import hashlib
 import hmac
 import logging
 import pickle
-import sys
 
 from huey.exceptions import ConfigurationError
 from huey.utils import encode
