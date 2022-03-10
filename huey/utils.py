@@ -42,7 +42,7 @@ def load_class(s):
 
 
 def reraise_as(new_exc_class):
-    exc_class, exc, tb = sys.exc_info()
+    exc_class, exc, _ = sys.exc_info()
     raise new_exc_class(f"{exc_class.__name__}: {exc}")
 
 

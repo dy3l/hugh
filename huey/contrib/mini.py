@@ -117,7 +117,7 @@ class MiniHuey(object):
                 # The 0-th item of a heap is always the smallest.
                 while self._scheduled_tasks and self._scheduled_tasks[0][0] <= now:
 
-                    eta, fn, args, kwargs, async_result = heapq.heappop(
+                    _, fn, args, kwargs, async_result = heapq.heappop(
                         self._scheduled_tasks
                     )
                     self._enqueue(fn, args, kwargs, async_result)

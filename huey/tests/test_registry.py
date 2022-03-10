@@ -21,7 +21,7 @@ class TestRegistry(BaseTestCase):
         self.assertRaises(ValueError, self.huey.task(name="task_a"), task_b)
 
         # We can register task_b and re-register task_a providing a new name.
-        tb = self.huey.task()(task_b)
+        _ = self.huey.task()(task_b)
         ta2 = self.huey.task(name="task_a2")(task_a)
 
         t1 = ta.s()
@@ -87,7 +87,7 @@ class TestRegistry(BaseTestCase):
 
         self.huey.task(name="a")(task_fn)
         p1 = self.huey.periodic_task(lambda _: False, name="p1")(task_fn)
-        p2 = self.huey.periodic_task(lambda _: False, name="p2")(task_fn)
+        _ = self.huey.periodic_task(lambda _: False, name="p2")(task_fn)
         self.huey.task(name="b")(task_fn)
 
         periodic = sorted(t.name for t in self.registry.periodic_tasks)

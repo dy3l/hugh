@@ -319,7 +319,7 @@ class Huey:
     def _emit(self, signal, task, *args, **kwargs):
         try:
             self._signal.send(signal, task, *args, **kwargs)
-        except Exception as exc:
+        except Exception:
             logger.exception(f'Error occurred sending signal "{signal}"')
 
     def serialize_task(self, task):
@@ -508,7 +508,7 @@ class Huey:
             logger.debug(f"Post-execute hook {name} for {task}.")
             try:
                 callback(task, task_value, exception)
-            except Exception as exc:
+            except Exception:
                 logger.exception(
                     f"Unhandled exception calling post-execute hook {name} for {task}."
                 )

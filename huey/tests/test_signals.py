@@ -22,17 +22,17 @@ class TestSignals(BaseTestCase):
         def task_a(n):
             return n + 1
 
-        r = task_a(3)
+        task_a(3)
         self.assertSignals([])
         self.assertEqual(self.execute_next(), 4)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
 
-        r = task_a.schedule((2,), delay=60)
+        task_a.schedule((2,), delay=60)
         self.assertSignals([])
         self.assertTrue(self.execute_next() is None)
         self.assertSignals([SIGNAL_SCHEDULED])
 
-        r = task_a(None)
+        task_a(None)
         self.assertSignals([])
         self.assertTrue(self.execute_next() is None)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_ERROR])
@@ -48,7 +48,7 @@ class TestSignals(BaseTestCase):
         def on_complete(sig, task, *_):
             results.append(self.huey.result(task.id))
 
-        r = task_a(2)
+        task_a(2)
         self.assertEqual(self.execute_next(), 3)
         self.assertEqual(results, [3])
 
@@ -57,7 +57,7 @@ class TestSignals(BaseTestCase):
         def task_a(n):
             return n + 1
 
-        r = task_a(None)
+        task_a(None)
         self.assertSignals([])
         self.assertTrue(self.execute_next() is None)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_RETRYING])
@@ -68,7 +68,7 @@ class TestSignals(BaseTestCase):
         def task_b(n):
             return n + 1
 
-        r = task_b(None)
+        task_b(None)
         self.assertSignals([])
         self.assertTrue(self.execute_next() is None)
         self.assertSignals(
@@ -81,12 +81,12 @@ class TestSignals(BaseTestCase):
             return n + 1
 
         task_a.revoke(revoke_once=True)
-        r = task_a(2)
+        task_a(2)
         self.assertSignals([])
         self.assertTrue(self.execute_next() is None)
         self.assertSignals([SIGNAL_REVOKED])
 
-        r = task_a(3)
+        task_a(3)
         self.assertEqual(self.execute_next(), 4)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
 
@@ -96,13 +96,13 @@ class TestSignals(BaseTestCase):
         def task_a(n):
             return n + 1
 
-        r = task_a(1)
+        task_a(1)
         self.assertSignals([])
         self.assertEqual(self.execute_next(), 2)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
 
         with self.huey.lock_task("lock-a"):
-            r = task_a(2)
+            task_a(2)
             self.assertSignals([])
             self.assertTrue(self.execute_next() is None)
             self.assertSignals([SIGNAL_EXECUTING, SIGNAL_LOCKED])
@@ -114,12 +114,12 @@ class TestSignals(BaseTestCase):
 
         now = datetime.datetime.now()
         expires = now + datetime.timedelta(seconds=15)
-        r = task_a(2)
+        task_a(2)
         self.assertSignals([])
         self.assertTrue(self.execute_next(expires) is None)
         self.assertSignals([SIGNAL_EXPIRED])
 
-        r = task_a(3)
+        task_a(3)
         self.assertSignals([])
         self.assertTrue(self.execute_next(), 4)
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
@@ -135,19 +135,19 @@ class TestSignals(BaseTestCase):
         def task_a(n):
             return n + 1
 
-        r = task_a(3)
+        task_a(3)
         self.assertEqual(extra_state, [])
         self.assertEqual(self.execute_next(), 4)
         self.assertEqual(extra_state, [3])
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
 
-        r2 = task_a(1)
+        task_a(1)
         self.assertEqual(self.execute_next(), 2)
         self.assertEqual(extra_state, [3, 1])
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
 
         self.huey.disconnect_signal(extra_handler, SIGNAL_EXECUTING)
-        r3 = task_a(2)
+        task_a(2)
         self.assertEqual(self.execute_next(), 3)
         self.assertEqual(extra_state, [3, 1])
         self.assertSignals([SIGNAL_EXECUTING, SIGNAL_COMPLETE])
@@ -168,7 +168,7 @@ class TestSignals(BaseTestCase):
         def task_a(n):
             return n + 1
 
-        r = task_a(1)
+        task_a(1)
         self.assertEqual(self.execute_next(), 2)
         self.assertEqual(state1, ["executing", "complete"])
         self.assertEqual(state2, ["executing", "complete"])
@@ -176,7 +176,7 @@ class TestSignals(BaseTestCase):
         self.huey.disconnect_signal(handler1, SIGNAL_COMPLETE)
         self.huey.disconnect_signal(handler2)
 
-        r2 = task_a(2)
+        task_a(2)
         self.assertEqual(self.execute_next(), 3)
         self.assertEqual(state1, ["executing", "complete", "executing"])
         self.assertEqual(state2, ["executing", "complete"])

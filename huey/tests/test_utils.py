@@ -17,7 +17,7 @@ class TestReraiseAs(unittest.TestCase):
         def raise_keyerror():
             try:
                 {}["huey"]
-            except KeyError as exc:
+            except KeyError:
                 reraise_as(MyException)
 
         self.assertRaises(MyException, raise_keyerror)

@@ -43,17 +43,17 @@ class TestPriority(BaseTestCase):
         self.assertEqual(self.state, results)
 
     def test_priority_override(self):
-        r0_0 = self.task_0(0)
-        r1_0 = self.task_1(10)
-        r2_0 = self.task_2(100)
+        self.task_0(0)
+        self.task_1(10)
+        self.task_2(100)
 
-        r0_1 = self.task_0(1, priority=2)
-        r1_1 = self.task_1(11, priority=0)
-        r2_1 = self.task_2(110, priority=1)
+        self.task_0(1, priority=2)
+        self.task_1(11, priority=0)
+        self.task_2(110, priority=1)
 
-        r0_2 = self.task_0(2, priority=1)
-        r1_2 = self.task_1(12, priority=2)
-        r2_2 = self.task_2(120, priority=0)
+        self.task_0(2, priority=1)
+        self.task_1(12, priority=2)
+        self.task_2(120, priority=0)
 
         results = [100, 1, 12, 10, 110, 2, 0, 11, 120]
         for result in results:
@@ -62,10 +62,10 @@ class TestPriority(BaseTestCase):
         self.assertEqual(len(self.huey), 0)
         self.assertEqual(self.state, results)
 
-        r0_3 = self.task_0(3)
-        r1_3 = self.task_1(13)
-        r2_3 = self.task_2(130)
-        rx = self.task_0(9, priority=9)
+        self.task_0(3)
+        self.task_1(13)
+        self.task_2(130)
+        self.task_0(9, priority=9)
         results.extend((9, 130, 13, 3))
         for result in results[-4:]:
             self.assertEqual(self.execute_next(), result)

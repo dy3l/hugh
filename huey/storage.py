@@ -512,7 +512,7 @@ class RedisStorage(BaseStorage):
         pipe.hexists(self.result_key, key)
         pipe.hget(self.result_key, key)
         pipe.hdel(self.result_key, key)
-        exists, val, n = pipe.execute()
+        exists, val, _ = pipe.execute()
         return EmptyData if not exists else val
 
     def has_data_for_key(self, key):

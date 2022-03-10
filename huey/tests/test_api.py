@@ -511,7 +511,7 @@ class TestQueue(BaseTestCase):
         now = datetime.datetime.now()
         seconds = lambda s: now + datetime.timedelta(seconds=s)
 
-        result = task_a.schedule((3,), eta=seconds(60), expires=5)
+        task_a.schedule((3,), eta=seconds(60), expires=5)
         self.assertEqual(len(self.huey), 1)
         self.assertEqual(self.huey.scheduled_count(), 0)
 
@@ -1030,11 +1030,11 @@ class TestDecorators(BaseTestCase):
                 raise ValueError("bad value")
             return n + 1
 
-        res = task_c(2)
+        task_c(2)
         self.assertEqual(self.execute_next(), 3)
         self.assertEqual(db.get_state(), ["open", "close"])
 
-        res = task_c(-1)
+        task_c(-1)
         self.assertEqual(db.get_state(), [])
         self.assertTrue(self.execute_next() is None)
         self.assertEqual(db.get_state(), ["open", "close"])
@@ -1140,7 +1140,7 @@ class TestTaskHooks(BaseTestCase):
         self.assertTrue(self.huey.unregister_pre_execute("test_pre_exec"))
         self.assertTrue(self.huey.unregister_post_execute("test_post_exec"))
 
-        r2 = task_a(4)
+        task_a(4)
         self.assertEqual(self.execute_next(), 5)
         self.assertEqual(len(pre_state), 1)
         self.assertEqual(len(post_state), 1)
@@ -1306,7 +1306,7 @@ class TestTaskChaining(BaseTestCase):
 
         # 1, 0, -1, ??.
         pipe = task_a.s(1).then(task_a).then(task_a).then(task_a)
-        r1, r2, r3, r4 = self.huey.enqueue(pipe)
+        _, _, r3, _ = self.huey.enqueue(pipe)
         self.assertEqual(self.execute_next(), 0)
         self.assertEqual(self.execute_next(), -1)
         self.assertTrue(self.execute_next() is None)
@@ -1321,7 +1321,7 @@ class TestTaskChaining(BaseTestCase):
             return n + 1
 
         pipe = task_a.s(1).then(task_a).then(task_a).then(task_a)
-        r1, r2, r3, r4 = self.huey.enqueue(pipe)
+        _, _, r3, _ = self.huey.enqueue(pipe)
         r3.revoke()
         self.assertEqual(self.execute_next(), 2)
         self.assertEqual(self.execute_next(), 3)

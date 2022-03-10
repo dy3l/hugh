@@ -91,7 +91,7 @@ class Worker(BaseProcess):
             self._logger.debug(f'calling startup hook "{name}"')
             try:
                 startup_hook()
-            except Exception as exc:
+            except Exception:
                 self._logger.exception(f'startup hook "{name}" failed')
 
     def shutdown(self):
@@ -99,7 +99,7 @@ class Worker(BaseProcess):
             self._logger.debug(f'calling shutdown hook "{name}"')
             try:
                 shutdown_hook()
-            except Exception as exc:
+            except Exception:
                 self._logger.exception(f'shutdown hook "{name}" failed')
 
     def loop(self, now=None):
@@ -114,7 +114,7 @@ class Worker(BaseProcess):
                 self.delay = self.default_delay
                 try:
                     self.huey.execute(task, now)
-                except Exception as exc:
+                except Exception:
                     self._logger.exception(
                         f"Unhandled error during execution of task {task.id}."
                     )

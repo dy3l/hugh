@@ -46,7 +46,7 @@ class TestSqlStorage(StorageTests, BaseTestCase):
         def task_a(n):
             return n + 1
 
-        r1 = task_a(1)
+        _ = task_a(1)
         r2 = task_a(2)
         self.assertEqual(self.execute_next(), 2)
         self.assertEqual(len(self.huey), 1)
