@@ -6,7 +6,6 @@ from huey.consumer import Consumer
 from huey.consumer import Scheduler
 from huey.consumer_options import ConsumerConfig
 from huey.tests.base import BaseTestCase
-from huey.utils import time_clock
 
 
 class TestConsumer(Consumer):
@@ -37,8 +36,8 @@ class TestConsumerIntegration(BaseTestCase):
 
     def schedule_tasks(self, consumer, now=None):
         scheduler = consumer._create_scheduler()
-        scheduler._next_loop = time_clock() + 60
-        scheduler._next_periodic = time_clock() - 60
+        scheduler._next_loop = time.monotonic() + 60
+        scheduler._next_periodic = time.monotonic() - 60
         scheduler.loop(now)
 
     def test_consumer_schedule_task(self):

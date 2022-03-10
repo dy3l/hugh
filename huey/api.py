@@ -35,9 +35,6 @@ from huey.utils import Error
 from huey.utils import normalize_expire_time
 from huey.utils import normalize_time
 from huey.utils import reraise_as
-from huey.utils import string_type
-from huey.utils import time_clock
-from huey.utils import to_timestamp
 
 
 logger = logging.getLogger("huey")
@@ -262,7 +259,7 @@ class Huey:
         return decorator
 
     def unregister_pre_execute(self, name):
-        if not isinstance(name, string_type):
+        if not isinstance(name, (bytes, str)):
             # Assume we were given the function itself.
             name = name.__name__
         return self._pre_execute.pop(name, None) is not None
@@ -275,7 +272,7 @@ class Huey:
         return decorator
 
     def unregister_post_execute(self, name):
-        if not isinstance(name, string_type):
+        if not isinstance(name, (bytes, str)):
             # Assume we were given the function itself.
             name = name.__name__
         return self._post_execute.pop(name, None) is not None
@@ -288,7 +285,7 @@ class Huey:
         return decorator
 
     def unregister_on_startup(self, name):
-        if not isinstance(name, string_type):
+        if not isinstance(name, (bytes, str)):
             # Assume we were given the function itself.
             name = name.__name__
         return self._startup.pop(name, None) is not None
@@ -301,7 +298,7 @@ class Huey:
         return decorator
 
     def unregister_on_shutdown(self, name=None):
-        if not isinstance(name, string_type):
+        if not isinstance(name, (bytes, str)):
             # Assume we were given the function itself.
             name = name.__name__
         return self._shutdown.pop(name, None) is not None
@@ -416,7 +413,7 @@ class Huey:
                 self._emit(S.SIGNAL_CANCELED, task)
                 return
 
-        start = time_clock()
+        start = time.monotonic()
         exception = None
         task_value = None
 
@@ -426,7 +423,7 @@ class Huey:
                 task_value = task.execute()
             finally:
                 self._tasks_in_flight.remove(task)
-                duration = time_clock() - start
+                duration = time.monotonic() - start
         except TaskLockedException as exc:
             logger.warning(f"Task {task.id} not run, unable to acquire lock.")
             exception = exc
@@ -1053,10 +1050,10 @@ class Result:
             if res is not EmptyData:
                 return res
         else:
-            start = time_clock()
+            start = time.monotonic()
             delay = 0.1
             while self._result is EmptyData:
-                if timeout and time_clock() - start >= timeout:
+                if timeout and time.monotonic() - start >= timeout:
                     if revoke_on_timeout:
                         self.revoke()
                     raise HueyException("timed out waiting for result")
